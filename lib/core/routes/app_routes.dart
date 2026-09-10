@@ -13,6 +13,8 @@ class AppRoutes {
   static const String manageHostel = '/manage-hostel';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
+  static const String wardenHome = '/warden-home';
+  static const String seekerHome = '/seeker-home';
 
 // Add more routes as needed
 }
