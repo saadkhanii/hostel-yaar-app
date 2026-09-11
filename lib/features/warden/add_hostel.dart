@@ -609,7 +609,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               Switch(
                 value: _inAppChat,
                 onChanged: (v) => setState(() => _inAppChat = v),
-                activeColor: maroon,
+                activeThumbColor: maroon,
               ),
             ],
           ),
@@ -961,7 +961,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       Switch(
                         value: attachedWashroom,
                         onChanged: (v) => setSheetState(() => attachedWashroom = v),
-                        activeColor: maroon,
+                        activeThumbColor: maroon,
                       ),
                     ],
                   ),
@@ -1423,3 +1423,4 @@ Widget _inputField({
         ),
       ),
     );
+

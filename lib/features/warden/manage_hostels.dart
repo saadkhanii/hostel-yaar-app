@@ -252,7 +252,7 @@ class _HostelListingCard extends StatelessWidget {
                   Switch(
                     value: active,
                     onChanged: onToggleActive,
-                    activeColor: activeGreen,
+                    activeThumbColor: activeGreen,
                   ),
                   Text(
                     active ? 'Active' : 'Inactive',
@@ -371,3 +371,4 @@ class _OccupancyStat extends StatelessWidget {
     );
   }
 }
+
