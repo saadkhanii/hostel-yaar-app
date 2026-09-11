@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
@@ -40,7 +40,7 @@ class RoleSelectionScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
-                  color: fg.withOpacity(0.7),
+                  color: fg.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 40),
@@ -92,9 +92,9 @@ class _RoleCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.08),
+          color: maroon.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.3)),
+          border: Border.all(color: maroon.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -117,13 +117,13 @@ class _RoleCard extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: maroon.withOpacity(0.7),
+                      color: maroon.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: maroon.withOpacity(0.5)),
+            Icon(Icons.arrow_forward_ios, size: 16, color: maroon.withValues(alpha: 0.5)),
           ],
         ),
       ),

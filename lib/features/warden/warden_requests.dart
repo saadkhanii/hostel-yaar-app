@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-// ── Warden Booking Requests Inbox ──────────────────────────────────────────
+// â”€â”€ Warden Booking Requests Inbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Reached from the Warden Dashboard's "Requests" stat card. Shows booking
 // requests seekers send from HostelDetailScreen's "Send Request" action.
 //
-// Dummy data below is self-contained for now — swap `_requests` for a real
+// Dummy data below is self-contained for now â€” swap `_requests` for a real
 // Firestore-backed stream once HostelDetailScreen actually writes booking
 // requests (see the TODO in hostel_detail.dart's `_requestBooking`) instead
 // of only showing a snackbar.
@@ -22,7 +22,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
 
   _RequestFilter _filter = _RequestFilter.all;
 
-  // ── Dummy data ─────────────────────────────────────────────────────────
+  // â”€â”€ Dummy data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final List<Map<String, dynamic>> _requests = [
     {
       'seekerName': 'Ali Hassan',
@@ -121,12 +121,12 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
         title: const Text('Reject Request', style: TextStyle(color: maroon, fontWeight: FontWeight.bold)),
         content: Text(
           'Reject ${request['seekerName']}\'s request for Room ${request['roomNumber']}?',
-          style: TextStyle(color: maroon.withOpacity(0.75)),
+          style: TextStyle(color: maroon.withValues(alpha: 0.75)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: maroon.withOpacity(0.6))),
+            child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
           ),
           TextButton(
             onPressed: () {
@@ -168,7 +168,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Filter chips ────────────────────────────────────────
+            // â”€â”€ Filter chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
               child: SizedBox(
@@ -190,9 +190,9 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: selected ? maroon : maroon.withOpacity(0.08),
+                            color: selected ? maroon : maroon.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: selected ? maroon : maroon.withOpacity(0.25)),
+                            border: Border.all(color: selected ? maroon : maroon.withValues(alpha: 0.25)),
                           ),
                           child: Text(
                             '$label ($count)',
@@ -247,12 +247,12 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined, size: 52, color: fg.withOpacity(0.3)),
+            Icon(Icons.inbox_outlined, size: 52, color: fg.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withOpacity(0.8)),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.8)),
             ),
           ],
         ),
@@ -261,7 +261,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
   }
 }
 
-// ── Request Card ────────────────────────────────────────────────────────────
+// â”€â”€ Request Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final String timeAgo;
@@ -299,20 +299,20 @@ class _RequestCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.06),
+        color: maroon.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: maroon.withOpacity(0.18)),
+        border: Border.all(color: maroon.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top row: seeker + status badge ────────────────────────
+          // â”€â”€ Top row: seeker + status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: maroon.withOpacity(0.15),
+                backgroundColor: maroon.withValues(alpha: 0.15),
                 child: const Icon(Icons.person, color: maroon, size: 20),
               ),
               const SizedBox(width: 12),
@@ -327,7 +327,7 @@ class _RequestCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       request['seekerPhone'] as String,
-                      style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.55)),
+                      style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.55)),
                     ),
                   ],
                 ),
@@ -335,7 +335,7 @@ class _RequestCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _statusColor(status).withOpacity(0.12),
+                  color: _statusColor(status).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -347,18 +347,18 @@ class _RequestCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-          Divider(height: 1, color: maroon.withOpacity(0.12)),
+          Divider(height: 1, color: maroon.withValues(alpha: 0.12)),
           const SizedBox(height: 12),
 
-          // ── Booking details ────────────────────────────────────────
+          // â”€â”€ Booking details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             children: [
-              Icon(Icons.home_work_outlined, size: 14, color: maroon.withOpacity(0.6)),
+              Icon(Icons.home_work_outlined, size: 14, color: maroon.withValues(alpha: 0.6)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${request['hostelName']} • Room ${request['roomNumber']}',
-                  style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.75)),
+                  '${request['hostelName']} â€¢ Room ${request['roomNumber']}',
+                  style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.75)),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -367,11 +367,11 @@ class _RequestCard extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.bed_outlined, size: 14, color: maroon.withOpacity(0.6)),
+              Icon(Icons.bed_outlined, size: 14, color: maroon.withValues(alpha: 0.6)),
               const SizedBox(width: 6),
               Text(
-                '${request['roomType']} Seater • ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'}',
-                style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.75)),
+                '${request['roomType']} Seater â€¢ ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'}',
+                style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.75)),
               ),
             ],
           ),
@@ -386,7 +386,7 @@ class _RequestCard extends StatelessWidget {
               ),
               Text(
                 timeAgo,
-                style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.5)),
+                style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.5)),
               ),
             ],
           ),
@@ -398,7 +398,7 @@ class _RequestCard extends StatelessWidget {
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.red.withOpacity(0.5)),
+                      side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),

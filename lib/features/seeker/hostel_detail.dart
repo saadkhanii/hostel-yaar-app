@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 
-// ── Hostel Detail Screen ───────────────────────────────────────────────────
+// â”€â”€ Hostel Detail Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Shown when a seeker taps a hostel card/tile on the dashboard. Takes a
 // loose `Map<String, dynamic>` for now (matching the shape used across the
-// other screens) — swap this for a shared `Hostel`/`Room` model once one
+// other screens) â€” swap this for a shared `Hostel`/`Room` model once one
 // exists, at which point `hostel` becomes a typed object instead of a map.
 //
 // Expected shape of `hostel`:
@@ -132,17 +132,17 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           'Send a booking request for Room ${room['number']} at '
               '${widget.hostel['name']}? The warden will confirm availability '
               'before you pay any advance.',
-          style: TextStyle(color: maroon.withOpacity(0.75)),
+          style: TextStyle(color: maroon.withValues(alpha: 0.75)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: maroon.withOpacity(0.6))),
+            child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
           ),
           TextButton(
             onPressed: () {
               // TODO: create a real booking-request record (Firestore) once
-              // the request/approval flow exists — this only confirms UI intent.
+              // the request/approval flow exists â€” this only confirms UI intent.
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Request sent for Room ${room['number']}')),
@@ -160,7 +160,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     // TODO: wire to url_launcher (tel:/https://wa.me/) and in-app chat once
     // those integrations exist.
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label — coming soon')),
+      SnackBar(content: Text('$label â€” coming soon')),
     );
   }
 
@@ -220,7 +220,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                           const SizedBox(height: 6),
                           Text(
                             'Rent and advance shown are per room, or per seat for shared listings.',
-                            style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+                            style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
                           ),
                           const SizedBox(height: 12),
                           ..._rooms.map(
@@ -256,8 +256,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       return Container(
         height: 220,
         width: double.infinity,
-        color: maroon.withOpacity(0.1),
-        child: Icon(Icons.home_work_outlined, size: 56, color: maroon.withOpacity(0.35)),
+        color: maroon.withValues(alpha: 0.1),
+        child: Icon(Icons.home_work_outlined, size: 56, color: maroon.withValues(alpha: 0.35)),
       );
     }
     return SizedBox(
@@ -273,8 +273,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stack) => Container(
-                color: maroon.withOpacity(0.1),
-                child: Icon(Icons.broken_image_outlined, color: maroon.withOpacity(0.35)),
+                color: maroon.withValues(alpha: 0.1),
+                child: Icon(Icons.broken_image_outlined, color: maroon.withValues(alpha: 0.35)),
               ),
             ),
           ),
@@ -293,7 +293,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     width: active ? 18 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.white.withOpacity(0.5),
+                      color: active ? Colors.white : Colors.white.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   );
@@ -320,12 +320,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.1),
+                color: maroon.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 hostel['type'] as String,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: maroon.withOpacity(0.8)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: maroon.withValues(alpha: 0.8)),
               ),
             ),
           ],
@@ -333,12 +333,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(Icons.location_on_outlined, size: 14, color: fg.withOpacity(0.55)),
+            Icon(Icons.location_on_outlined, size: 14, color: fg.withValues(alpha: 0.55)),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 hostel['city'] as String,
-                style: TextStyle(fontSize: 13, color: fg.withOpacity(0.55)),
+                style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.55)),
               ),
             ),
           ],
@@ -355,7 +355,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
             const SizedBox(width: 4),
             Text(
               '(${hostel['reviewCount']} reviews)',
-              style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+              style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -368,20 +368,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.05),
+        color: maroon.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withOpacity(0.18)),
+        border: Border.all(color: maroon.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
           Expanded(
             child: _quickStat(
               icon: Icons.payments_outlined,
-              value: starting != null ? 'Rs. $starting' : '—',
+              value: starting != null ? 'Rs. $starting' : 'â€”',
               label: 'Starting from',
             ),
           ),
-          Container(width: 1, height: 34, color: maroon.withOpacity(0.15)),
+          Container(width: 1, height: 34, color: maroon.withValues(alpha: 0.15)),
           Expanded(
             child: _quickStat(
               icon: Icons.event_available_outlined,
@@ -403,7 +403,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: maroon)),
-            Text(label, style: TextStyle(fontSize: 10, color: maroon.withOpacity(0.6))),
+            Text(label, style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.6))),
           ],
         ),
       ],
@@ -414,7 +414,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     if (facilities.isEmpty) {
       return Text(
         'No facilities listed yet.',
-        style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.5)),
+        style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.5)),
       );
     }
     return Wrap(
@@ -424,9 +424,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: maroon.withOpacity(0.07),
+            color: maroon.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: maroon.withOpacity(0.2)),
+            border: Border.all(color: maroon.withValues(alpha: 0.2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -445,16 +445,16 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.05),
+        color: maroon.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withOpacity(0.18)),
+        border: Border.all(color: maroon.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             hostel['address'] as String,
-            style: TextStyle(fontSize: 13, color: fg.withOpacity(0.75)),
+            style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.75)),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -483,7 +483,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
-        border: Border(top: BorderSide(color: maroon.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: maroon.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
@@ -506,7 +506,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       child: OutlinedButton.icon(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: maroon.withOpacity(0.4)),
+          side: BorderSide(color: maroon.withValues(alpha: 0.4)),
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -522,7 +522,7 @@ Widget _sectionTitle(String title, Color fg) => Text(
   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg),
 );
 
-// ── Room Card (seeker-facing, read-only + request action) ─────────────────
+// â”€â”€ Room Card (seeker-facing, read-only + request action) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
@@ -545,9 +545,9 @@ class _DetailRoomCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.05),
+        color: maroon.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withOpacity(0.18)),
+        border: Border.all(color: maroon.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -564,7 +564,7 @@ class _DetailRoomCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: available ? Colors.green.withOpacity(0.15) : maroon.withOpacity(0.12),
+                  color: available ? Colors.green.withValues(alpha: 0.15) : maroon.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -582,10 +582,10 @@ class _DetailRoomCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${room['roomType']} Seater • '
-                '${isSeatRoom ? 'Per Seat' : 'Complete Room'} • '
+            '${room['roomType']} Seater â€¢ '
+                '${isSeatRoom ? 'Per Seat' : 'Complete Room'} â€¢ '
                 '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
-            style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.6)),
+            style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           Row(
@@ -600,7 +600,7 @@ class _DetailRoomCard extends StatelessWidget {
                     ),
                     Text(
                       'Advance: Rs. $advance',
-                      style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -609,7 +609,7 @@ class _DetailRoomCard extends StatelessWidget {
                 onPressed: available ? onRequest : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: maroon,
-                  disabledBackgroundColor: maroon.withOpacity(0.25),
+                  disabledBackgroundColor: maroon.withValues(alpha: 0.25),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),

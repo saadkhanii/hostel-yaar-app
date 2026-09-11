@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/data/dummy_hostels.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   // Routed through AppRouter/AppRoutes.hostelDetail like every other screen
-  // in this app, rather than a direct Navigator.push — see app_router.dart.
+  // in this app, rather than a direct Navigator.push â€” see app_router.dart.
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
 }
 
@@ -32,7 +32,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   void _onNavTap(int index) {
     switch (index) {
       case 0:
-      // Already on the dashboard — nothing to do.
+      // Already on the dashboard â€” nothing to do.
         break;
       case 1:
         _goToSearch();
@@ -42,7 +42,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         break;
       case 3:
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile — coming soon')),
+          const SnackBar(content: Text('Profile â€” coming soon')),
         );
         break;
     }
@@ -63,7 +63,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ──────────────────────────────────────────
+              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -74,7 +74,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                         'Hello,',
                         style: TextStyle(
                           fontSize: 14,
-                          color: fg.withOpacity(0.6),
+                          color: fg.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
@@ -89,7 +89,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                   ),
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: maroon.withOpacity(0.15),
+                    backgroundColor: maroon.withValues(alpha: 0.15),
                     child: const Icon(Icons.person, color: maroon, size: 26),
                   ),
                 ],
@@ -97,17 +97,17 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
               const SizedBox(height: 20),
 
-              // ── Search Bar ───────────────────────────────────────
+              // â”€â”€ Search Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: maroon.withOpacity(0.08),
+                  color: maroon.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: maroon.withOpacity(0.2)),
+                  border: Border.all(color: maroon.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.search, color: maroon.withOpacity(0.5)),
+                    Icon(Icons.search, color: maroon.withValues(alpha: 0.5)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
@@ -116,7 +116,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                         decoration: InputDecoration(
                           hintText: 'Search hostels in your city...',
                           hintStyle: TextStyle(
-                            color: maroon.withOpacity(0.4),
+                            color: maroon.withValues(alpha: 0.4),
                             fontSize: 14,
                           ),
                           border: InputBorder.none,
@@ -125,7 +125,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                     ),
                     GestureDetector(
                       onTap: () => _goToSearch(),
-                      child: Icon(Icons.tune, color: maroon.withOpacity(0.5)),
+                      child: Icon(Icons.tune, color: maroon.withValues(alpha: 0.5)),
                     ),
                   ],
                 ),
@@ -133,7 +133,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
               const SizedBox(height: 28),
 
-              // ── AI Recommendations ───────────────────────────────
+              // â”€â”€ AI Recommendations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -151,7 +151,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                       'See all',
                       style: TextStyle(
                         fontSize: 13,
-                        color: maroon.withOpacity(0.6),
+                        color: maroon.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -163,12 +163,12 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                 style: TextStyle(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
-                  color: fg.withOpacity(0.5),
+                  color: fg.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(height: 14),
 
-              // AI Recommendation Cards (horizontal scroll) — top matches
+              // AI Recommendation Cards (horizontal scroll) â€” top matches
               // from the shared dummy dataset, sorted by matchPercent.
               SizedBox(
                 height: 190,
@@ -190,7 +190,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
               const SizedBox(height: 28),
 
-              // ── Find Your Hostel ─────────────────────────────────
+              // â”€â”€ Find Your Hostel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Text(
                 'Find Your Hostel',
                 style: TextStyle(
@@ -221,7 +221,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
               const SizedBox(height: 28),
 
-              // ── All Hostels List ─────────────────────────────────
+              // â”€â”€ All Hostels List â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -237,7 +237,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                     '${DummyHostels.all.length} hostels',
                     style: TextStyle(
                       fontSize: 12,
-                      color: fg.withOpacity(0.5),
+                      color: fg.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -259,11 +259,11 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         ),
       ),
 
-      // ── Bottom Nav ───────────────────────────────────────────────
+      // â”€â”€ Bottom Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
         selectedItemColor: maroon,
-        unselectedItemColor: maroon.withOpacity(0.4),
+        unselectedItemColor: maroon.withValues(alpha: 0.4),
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
         onTap: _onNavTap,
@@ -278,7 +278,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   }
 }
 
-// ── Horizontal Hostel Card ────────────────────────────────────────────────────
+// â”€â”€ Horizontal Hostel Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HostelCard extends StatelessWidget {
   final String name;
   final String location;
@@ -309,9 +309,9 @@ class _HostelCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 14),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.08),
+          color: maroon.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.25)),
+          border: Border.all(color: maroon.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,12 +353,12 @@ class _HostelCard extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.location_on_outlined, size: 12, color: maroon.withOpacity(0.6)),
+                Icon(Icons.location_on_outlined, size: 12, color: maroon.withValues(alpha: 0.6)),
                 const SizedBox(width: 2),
                 Expanded(
                   child: Text(
                     location,
-                    style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.6)),
+                    style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -389,12 +389,12 @@ class _HostelCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.1),
+                color: maroon.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 type,
-                style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.8)),
+                style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.8)),
               ),
             ),
           ],
@@ -404,7 +404,7 @@ class _HostelCard extends StatelessWidget {
   }
 }
 
-// ── Action Card ──────────────────────────────────────────────────────────────
+// â”€â”€ Action Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -429,16 +429,16 @@ class _ActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.08),
+          color: maroon.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.3)),
+          border: Border.all(color: maroon.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.12),
+                color: maroon.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: maroon, size: 24),
@@ -459,12 +459,12 @@ class _ActionCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.6)),
+                    style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 14, color: maroon.withOpacity(0.4)),
+            Icon(Icons.arrow_forward_ios, size: 14, color: maroon.withValues(alpha: 0.4)),
           ],
         ),
       ),
@@ -472,7 +472,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// ── Hostel List Tile ─────────────────────────────────────────────────────────
+// â”€â”€ Hostel List Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HostelListTile extends StatelessWidget {
   final String name;
   final String location;
@@ -500,9 +500,9 @@ class _HostelListTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.06),
+          color: maroon.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: maroon.withOpacity(0.18)),
+          border: Border.all(color: maroon.withValues(alpha: 0.18)),
         ),
         child: Row(
           children: [
@@ -510,7 +510,7 @@ class _HostelListTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.12),
+                color: maroon.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.home_work_outlined, color: maroon, size: 24),
@@ -531,11 +531,11 @@ class _HostelListTile extends StatelessWidget {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withOpacity(0.5)),
+                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withValues(alpha: 0.5)),
                       const SizedBox(width: 2),
                       Text(
                         location,
-                        style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.5)),
                       ),
                     ],
                   ),
@@ -565,12 +565,12 @@ class _HostelListTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: maroon.withOpacity(0.1),
+                    color: maroon.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     type,
-                    style: TextStyle(fontSize: 10, color: maroon.withOpacity(0.8)),
+                    style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.8)),
                   ),
                 ),
               ],

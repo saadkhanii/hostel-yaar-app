@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 
@@ -20,7 +20,7 @@ class WardenDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header ──────────────────────────────────────────
+              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -31,7 +31,7 @@ class WardenDashboard extends StatelessWidget {
                         'Welcome back,',
                         style: TextStyle(
                           fontSize: 14,
-                          color: fg.withOpacity(0.6),
+                          color: fg.withValues(alpha: 0.6),
                         ),
                       ),
                       Text(
@@ -46,7 +46,7 @@ class WardenDashboard extends StatelessWidget {
                   ),
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: maroon.withOpacity(0.15),
+                    backgroundColor: maroon.withValues(alpha: 0.15),
                     child: const Icon(Icons.person, color: maroon, size: 26),
                   ),
                 ],
@@ -54,7 +54,7 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // ── Stats Row ────────────────────────────────────────
+              // â”€â”€ Stats Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Row(
                 children: [
                   _StatCard(
@@ -85,13 +85,13 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // ── Main Actions ─────────────────────────────────────
+              // â”€â”€ Main Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Text(
                 'Manage',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: fg.withOpacity(0.7),
+                  color: fg.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 14),
@@ -118,32 +118,32 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // ── Recent Activity ──────────────────────────────────
+              // â”€â”€ Recent Activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Text(
                 'Recent Activity',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: fg.withOpacity(0.7),
+                  color: fg.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 14),
 
               _ActivityTile(
                 title: 'New booking request',
-                subtitle: 'Ali Hassan — Boys Hostel Block A',
+                subtitle: 'Ali Hassan â€” Boys Hostel Block A',
                 time: '2h ago',
                 isDark: isDark,
               ),
               _ActivityTile(
                 title: 'Room marked vacant',
-                subtitle: 'Room 204 — Green View Hostel',
+                subtitle: 'Room 204 â€” Green View Hostel',
                 time: 'Yesterday',
                 isDark: isDark,
               ),
               _ActivityTile(
                 title: 'New review received',
-                subtitle: '4★ on Sunrise Boys Hostel',
+                subtitle: '4â˜… on Sunrise Boys Hostel',
                 time: '2 days ago',
                 isDark: isDark,
               ),
@@ -152,29 +152,29 @@ class WardenDashboard extends StatelessWidget {
         ),
       ),
 
-      // ── Bottom Nav ───────────────────────────────────────────────
+      // â”€â”€ Bottom Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
         selectedItemColor: maroon,
-        unselectedItemColor: maroon.withOpacity(0.4),
+        unselectedItemColor: maroon.withValues(alpha: 0.4),
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:
-            // Already on the dashboard — nothing to do.
+            // Already on the dashboard â€” nothing to do.
               break;
             case 1:
               NavigationService.navigateTo(AppRoutes.manageHostel);
               break;
             case 2:
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Alerts — coming soon')),
+                const SnackBar(content: Text('Alerts â€” coming soon')),
               );
               break;
             case 3:
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings — coming soon')),
+                const SnackBar(content: Text('Settings â€” coming soon')),
               );
               break;
           }
@@ -190,7 +190,7 @@ class WardenDashboard extends StatelessWidget {
   }
 }
 
-// ── Stat Card ────────────────────────────────────────────────────────────────
+// â”€â”€ Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -216,9 +216,9 @@ class _StatCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
           decoration: BoxDecoration(
-            color: maroon.withOpacity(0.08),
+            color: maroon.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: maroon.withOpacity(0.2)),
+            border: Border.all(color: maroon.withValues(alpha: 0.2)),
           ),
           child: Column(
             children: [
@@ -238,7 +238,7 @@ class _StatCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11,
-                  color: maroon.withOpacity(0.7),
+                  color: maroon.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -249,7 +249,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Action Card ──────────────────────────────────────────────────────────────
+// â”€â”€ Action Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -274,16 +274,16 @@ class _ActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.08),
+          color: maroon.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.3)),
+          border: Border.all(color: maroon.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.12),
+                color: maroon.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: maroon, size: 28),
@@ -306,13 +306,13 @@ class _ActionCard extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: maroon.withOpacity(0.6),
+                      color: maroon.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 14, color: maroon.withOpacity(0.4)),
+            Icon(Icons.arrow_forward_ios, size: 14, color: maroon.withValues(alpha: 0.4)),
           ],
         ),
       ),
@@ -320,7 +320,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// ── Activity Tile ────────────────────────────────────────────────────────────
+// â”€â”€ Activity Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _ActivityTile extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -341,9 +341,9 @@ class _ActivityTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.05),
+        color: maroon.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: maroon.withOpacity(0.15)),
+        border: Border.all(color: maroon.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -366,7 +366,7 @@ class _ActivityTile extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: maroon.withOpacity(0.6),
+                    color: maroon.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -376,7 +376,7 @@ class _ActivityTile extends StatelessWidget {
             time,
             style: TextStyle(
               fontSize: 11,
-              color: maroon.withOpacity(0.5),
+              color: maroon.withValues(alpha: 0.5),
             ),
           ),
         ],

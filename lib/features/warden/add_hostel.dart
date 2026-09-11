@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AddHostelScreen extends StatefulWidget {
@@ -14,14 +14,14 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
 
-  // ── Basic Info ─────────────────────────────────────────────
+  // â”€â”€ Basic Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _nameCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _totalRoomsCtrl = TextEditingController();
   String _selectedType = 'Boys';
 
-  // ── Rooms ──────────────────────────────────────────────────
+  // â”€â”€ Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final List<Map<String, dynamic>> _rooms = [];
 
   // Parses the "Total rooms in hostel" field from Step 1. Used to gate
@@ -29,9 +29,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   // hostel actually has.
   int? get _declaredTotalRooms => int.tryParse(_totalRoomsCtrl.text.trim());
 
-  // ── Pricing (rent & advance security are both set per-room) ──────────
+  // â”€â”€ Pricing (rent & advance security are both set per-room) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  // ── Facilities ─────────────────────────────────────────────
+  // â”€â”€ Facilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final Map<String, bool> _facilities = {
     'WiFi': false,
     'Meals': false,
@@ -44,12 +44,12 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     'Water Cooler': false,
   };
 
-  // ── Contact ────────────────────────────────────────────────
+  // â”€â”€ Contact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final _phoneCtrl = TextEditingController();
   final _whatsappCtrl = TextEditingController();
   bool _inAppChat = true;
 
-  // ── Photos ─────────────────────────────────────────────────
+  // â”€â”€ Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final List<String> _photos = []; // will hold file paths
 
   @override
@@ -90,10 +90,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
       ),
       body: Column(
         children: [
-          // ── Step Indicator ───────────────────────────────────
+          // â”€â”€ Step Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _StepIndicator(currentStep: _currentStep),
 
-          // ── Form ─────────────────────────────────────────────
+          // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Expanded(
             child: Form(
               key: _formKey,
@@ -104,7 +104,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ),
           ),
 
-          // ── Bottom Buttons ────────────────────────────────────
+          // â”€â”€ Bottom Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _BottomButtons(
             currentStep: _currentStep,
             totalSteps: 5,
@@ -134,7 +134,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     }
   }
 
-  // ── Step 1: Basic Info ────────────────────────────────────────────────────
+  // â”€â”€ Step 1: Basic Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBasicInfo(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,10 +161,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: selected ? maroon : maroon.withOpacity(0.08),
+                    color: selected ? maroon : maroon.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: selected ? maroon : maroon.withOpacity(0.25),
+                      color: selected ? maroon : maroon.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Text(
@@ -217,7 +217,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // ── Step 2: Rooms ─────────────────────────────────────────────────────────
+  // â”€â”€ Step 2: Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildRooms(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,11 +226,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         const SizedBox(height: 6),
         Text(
           'Add each room individually with its details',
-          style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+          style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 16),
 
-        // Availability summary — lets the warden see at a glance how many
+        // Availability summary â€” lets the warden see at a glance how many
         // Complete Rooms are vacant vs. filled, and how many individual
         // seats are open across Per Seat rooms.
         if (_rooms.isNotEmpty) _buildAvailabilitySummary(fg),
@@ -254,22 +254,22 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
-              color: maroon.withOpacity(0.06),
+              color: maroon.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: maroon.withOpacity(0.3),
+                color: maroon.withValues(alpha: 0.3),
                 style: BorderStyle.solid,
               ),
             ),
             child: Column(
               children: [
-                Icon(Icons.add_circle_outline, color: maroon.withOpacity(0.6), size: 28),
+                Icon(Icons.add_circle_outline, color: maroon.withValues(alpha: 0.6), size: 28),
                 const SizedBox(height: 6),
                 Text(
                   'Add a Room',
                   style: TextStyle(
                     fontSize: 14,
-                    color: maroon.withOpacity(0.7),
+                    color: maroon.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -285,7 +285,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               _rooms.length < _declaredTotalRooms!
                   ? 'Add ${_declaredTotalRooms! - _rooms.length} more room${_declaredTotalRooms! - _rooms.length == 1 ? '' : 's'} to match the total entered in Step 1'
                   : 'You have ${_rooms.length - _declaredTotalRooms!} more room${_rooms.length - _declaredTotalRooms! == 1 ? '' : 's'} than declared in Step 1',
-              style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.5)),
+              style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.5)),
             ),
           ),
       ],
@@ -294,7 +294,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
   // Summarizes booking availability across all added rooms: how many
   // Complete Rooms are vacant/filled, and how many total seats are open
-  // across Per Seat rooms — so the warden can see booking capacity at a
+  // across Per Seat rooms â€” so the warden can see booking capacity at a
   // glance while adding rooms.
   Widget _buildAvailabilitySummary(Color fg) {
     final completeRooms = _rooms.where((r) => r['bookingType'] == 'Room').toList();
@@ -315,9 +315,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.05),
+        color: maroon.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withOpacity(0.18)),
+        border: Border.all(color: maroon.withValues(alpha: 0.18)),
       ),
       child: Row(
         children: [
@@ -331,7 +331,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               ),
             ),
           if (completeRooms.isNotEmpty && seatRooms.isNotEmpty)
-            Container(width: 1, height: 34, color: maroon.withOpacity(0.15)),
+            Container(width: 1, height: 34, color: maroon.withValues(alpha: 0.15)),
           if (seatRooms.isNotEmpty)
             Expanded(
               child: _summaryStat(
@@ -368,8 +368,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               ),
             ),
             Text(
-              '$label • $sublabel',
-              style: TextStyle(fontSize: 10, color: maroon.withOpacity(0.6)),
+              '$label â€¢ $sublabel',
+              style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.6)),
             ),
           ],
         ),
@@ -377,7 +377,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // ── Step 3: Pricing ───────────────────────────────────────────────────────
+  // â”€â”€ Step 3: Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildPricing(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,16 +386,16 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         const SizedBox(height: 6),
         Text(
           'Set the monthly rent and advance security for each room individually.',
-          style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+          style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 16),
         if (_rooms.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: maroon.withOpacity(0.06),
+              color: maroon.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: maroon.withOpacity(0.15)),
+              border: Border.all(color: maroon.withValues(alpha: 0.15)),
             ),
             child: Row(
               children: [
@@ -403,8 +403,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Add your rooms first — you\'ll set the rent and advance for each one here.',
-                    style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.7)),
+                    'Add your rooms first â€” you\'ll set the rent and advance for each one here.',
+                    style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.7)),
                   ),
                 ),
               ],
@@ -421,9 +421,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.05),
+                color: maroon.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: maroon.withOpacity(0.18)),
+                border: Border.all(color: maroon.withValues(alpha: 0.18)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,8 +442,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '• ${room['roomType']} Seater',
-                        style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.6)),
+                        'â€¢ ${room['roomType']} Seater',
+                        style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                       ),
                     ],
                   ),
@@ -479,7 +479,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // ── Step 4: Facilities ────────────────────────────────────────────────────
+  // â”€â”€ Step 4: Facilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildFacilities(Color fg) {
     final icons = {
       'WiFi': Icons.wifi,
@@ -500,7 +500,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         const SizedBox(height: 6),
         Text(
           'Select all that apply',
-          style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+          style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 16),
         GridView.count(
@@ -516,10 +516,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               onTap: () => setState(() => _facilities[facility] = !selected),
               child: Container(
                 decoration: BoxDecoration(
-                  color: selected ? maroon : maroon.withOpacity(0.07),
+                  color: selected ? maroon : maroon.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: selected ? maroon : maroon.withOpacity(0.2),
+                    color: selected ? maroon : maroon.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
@@ -527,7 +527,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   children: [
                     Icon(
                       icons[facility] ?? Icons.check_circle_outline,
-                      color: selected ? Colors.white : maroon.withOpacity(0.6),
+                      color: selected ? Colors.white : maroon.withValues(alpha: 0.6),
                       size: 26,
                     ),
                     const SizedBox(height: 6),
@@ -537,7 +537,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: selected ? Colors.white : maroon.withOpacity(0.7),
+                        color: selected ? Colors.white : maroon.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -550,7 +550,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // ── Step 5: Contact & Photos ──────────────────────────────────────────────
+  // â”€â”€ Step 5: Contact & Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildContactAndPhotos(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,9 +579,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: maroon.withOpacity(0.07),
+            color: maroon.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: maroon.withOpacity(0.2)),
+            border: Border.all(color: maroon.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
@@ -601,7 +601,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     ),
                     Text(
                       'Allow seekers to message you directly',
-                      style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -620,7 +620,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         const SizedBox(height: 6),
         Text(
           'Add as many photos as you like',
-          style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+          style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 14),
 
@@ -635,7 +635,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             // Uploaded photos (dummy placeholders)
             ..._photos.map((_) => Container(
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.1),
+                color: maroon.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.image, color: maroon),
@@ -649,19 +649,19 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: maroon.withOpacity(0.07),
+                  color: maroon.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: maroon.withOpacity(0.25)),
+                  border: Border.all(color: maroon.withValues(alpha: 0.25)),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_photo_alternate_outlined,
-                        color: maroon.withOpacity(0.6), size: 28),
+                        color: maroon.withValues(alpha: 0.6), size: 28),
                     const SizedBox(height: 4),
                     Text(
                       'Add',
-                      style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -673,7 +673,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // ── Add Room Bottom Sheet ─────────────────────────────────────────────────
+  // â”€â”€ Add Room Bottom Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Room types available: 1 (Single) through 6 seater.
   static const List<int> _roomTypeOptions = [1, 2, 3, 4, 5, 6];
 
@@ -692,7 +692,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     // NOTE: `?? true` defaults missing 'vacant' to Vacant. Harmless now
     // since all rooms are created fresh in this session, but once rooms
     // are loaded back from Firestore, older documents saved before this
-    // field existed will silently read as Vacant — revisit if that
+    // field existed will silently read as Vacant â€” revisit if that
     // matters (e.g. migrate on read, or default to Filled instead).
     bool roomVacant = existing?['vacant'] ?? true;
     String? errorText;
@@ -765,10 +765,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                           margin: const EdgeInsets.only(right: 8),
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: selected ? maroon : maroon.withOpacity(0.08),
+                            color: selected ? maroon : maroon.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: selected ? maroon : maroon.withOpacity(0.25),
+                              color: selected ? maroon : maroon.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Text(
@@ -791,11 +791,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     bookingType == 'Room'
                         ? 'Tenant books the whole room and can adjust occupancy freely.'
                         : 'Tenant books a single seat/bed; only the seats you mark available can be booked.',
-                    style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.55)),
+                    style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
                   ),
                 ),
 
-                // 1b. Room Status (Vacant / Filled) — only relevant for
+                // 1b. Room Status (Vacant / Filled) â€” only relevant for
                 // Complete Room listings, since Per Seat availability is
                 // already tracked via Available Seats.
                 if (bookingType == 'Room') ...[
@@ -824,12 +824,12 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                             decoration: BoxDecoration(
                               color: selected
                                   ? (value ? Colors.green : maroon)
-                                  : maroon.withOpacity(0.08),
+                                  : maroon.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: selected
                                     ? (value ? Colors.green : maroon)
-                                    : maroon.withOpacity(0.25),
+                                    : maroon.withValues(alpha: 0.25),
                               ),
                             ),
                             child: Text(
@@ -852,7 +852,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       roomVacant
                           ? 'This room is free and will count toward available bookings.'
                           : 'This room is currently occupied and won\'t be offered for booking.',
-                      style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.55)),
+                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
                     ),
                   ),
                 ],
@@ -896,10 +896,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: selected ? maroon : maroon.withOpacity(0.08),
+                            color: selected ? maroon : maroon.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: selected ? maroon : maroon.withOpacity(0.25),
+                              color: selected ? maroon : maroon.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Text(
@@ -915,16 +915,16 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     },
                   ),
                 ),
-                // 4. Available Seats — only relevant for Per Seat listings.
+                // 4. Available Seats â€” only relevant for Per Seat listings.
                 // A Complete Room booking is priced/booked as one unit, so
                 // the room type (seater) alone is enough. 0 is a valid
-                // value here — it means every seat in the room is currently
+                // value here â€” it means every seat in the room is currently
                 // occupied, which the warden still needs to record.
                 if (bookingType == 'Seat') ...[
                   const SizedBox(height: 14),
                   _inputField(
                     controller: availableSeatsCtrl,
-                    label: 'Available Seats (0 – $roomType)',
+                    label: 'Available Seats (0 â€“ $roomType)',
                     hint: '0 if fully occupied, up to $roomType',
                     icon: Icons.people_outline,
                     keyboardType: TextInputType.number,
@@ -944,9 +944,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: maroon.withOpacity(0.07),
+                    color: maroon.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: maroon.withOpacity(0.2)),
+                    border: Border.all(color: maroon.withValues(alpha: 0.2)),
                   ),
                   child: Row(
                     children: [
@@ -987,9 +987,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     ),
                     onPressed: () {
                       // Complete Room bookings always use the full room type
-                      // as the "available seats" — there's nothing to ask.
+                      // as the "available seats" â€” there's nothing to ask.
                       // For Per Seat rooms, an empty field is treated as not
-                      // entered (still required) — 0 is a distinct, valid
+                      // entered (still required) â€” 0 is a distinct, valid
                       // value meaning "fully occupied".
                       final seatsText = availableSeatsCtrl.text.trim();
                       final parsedSeats = int.tryParse(seatsText);
@@ -1001,7 +1001,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                         setSheetState(() => errorText = 'Room number/name is required');
                         return;
                       }
-                      // Block duplicate room numbers — compared
+                      // Block duplicate room numbers â€” compared
                       // case-insensitively, and skipping the room currently
                       // being edited so re-saving it doesn't flag itself.
                       final isDuplicate = _rooms.asMap().entries.any((entry) =>
@@ -1082,7 +1082,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             content: Text(
               remaining > 0
                   ? 'Add $remaining more room${remaining == 1 ? '' : 's'} to match the total ($declared) entered in Step 1'
-                  : 'You\'ve added ${_rooms.length} rooms but Step 1 says $declared — remove ${-remaining} or update the total',
+                  : 'You\'ve added ${_rooms.length} rooms but Step 1 says $declared â€” remove ${-remaining} or update the total',
             ),
           ),
         );
@@ -1105,7 +1105,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   }
 }
 
-// ── Room Card ─────────────────────────────────────────────────────────────────
+// â”€â”€ Room Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _RoomCard extends StatelessWidget {
   final int index;
   final Map<String, dynamic> room;
@@ -1126,9 +1126,9 @@ class _RoomCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.07),
+        color: maroon.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: maroon.withOpacity(0.2)),
+        border: Border.all(color: maroon.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -1154,8 +1154,8 @@ class _RoomCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: room['vacant'] == true
-                              ? Colors.green.withOpacity(0.15)
-                              : maroon.withOpacity(0.12),
+                              ? Colors.green.withValues(alpha: 0.15)
+                              : maroon.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1176,7 +1176,7 @@ class _RoomCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: maroon.withOpacity(0.12),
+                          color: maroon.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -1193,20 +1193,20 @@ class _RoomCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${room['roomType']} Seater • '
-                      '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat • ${room['availableSeats']}/${room['roomType']} available'} • '
+                  '${room['roomType']} Seater â€¢ '
+                      '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat â€¢ ${room['availableSeats']}/${room['roomType']} available'} â€¢ '
                       '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
-                  style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.6)),
+                  style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: maroon.withOpacity(0.6), size: 18),
+            icon: Icon(Icons.edit_outlined, color: maroon.withValues(alpha: 0.6), size: 18),
             onPressed: onEdit,
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, color: maroon.withOpacity(0.6), size: 18),
+            icon: Icon(Icons.delete_outline, color: maroon.withValues(alpha: 0.6), size: 18),
             onPressed: onDelete,
           ),
         ],
@@ -1215,7 +1215,7 @@ class _RoomCard extends StatelessWidget {
   }
 }
 
-// ── Step Indicator ────────────────────────────────────────────────────────────
+// â”€â”€ Step Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _StepIndicator extends StatelessWidget {
   final int currentStep;
   static const maroon = Color(0xFF800020);
@@ -1240,7 +1240,7 @@ class _StepIndicator extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: done || active ? maroon : maroon.withOpacity(0.15),
+                        color: done || active ? maroon : maroon.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -1250,7 +1250,7 @@ class _StepIndicator extends StatelessWidget {
                           '${i + 1}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: active ? Colors.white : maroon.withOpacity(0.5),
+                            color: active ? Colors.white : maroon.withValues(alpha: 0.5),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1261,7 +1261,7 @@ class _StepIndicator extends StatelessWidget {
                       labels[i],
                       style: TextStyle(
                         fontSize: 9,
-                        color: active ? maroon : maroon.withOpacity(0.4),
+                        color: active ? maroon : maroon.withValues(alpha: 0.4),
                         fontWeight: active ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
@@ -1272,7 +1272,7 @@ class _StepIndicator extends StatelessWidget {
                     child: Container(
                       height: 1.5,
                       margin: const EdgeInsets.only(bottom: 16),
-                      color: i < currentStep ? maroon : maroon.withOpacity(0.2),
+                      color: i < currentStep ? maroon : maroon.withValues(alpha: 0.2),
                     ),
                   ),
               ],
@@ -1284,7 +1284,7 @@ class _StepIndicator extends StatelessWidget {
   }
 }
 
-// ── Bottom Buttons ────────────────────────────────────────────────────────────
+// â”€â”€ Bottom Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _BottomButtons extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -1309,7 +1309,7 @@ class _BottomButtons extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
-        border: Border(top: BorderSide(color: maroon.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: maroon.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
@@ -1355,7 +1355,7 @@ class _BottomButtons extends StatelessWidget {
   }
 }
 
-// ── Shared Widgets ────────────────────────────────────────────────────────────
+// â”€â”€ Shared Widgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Widget _sectionTitle(String title, Color fg) => Text(
   title,
   style: TextStyle(
@@ -1370,7 +1370,7 @@ Widget _sectionLabel(String label, Color fg) => Text(
   style: TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
-    color: fg.withOpacity(0.8),
+    color: fg.withValues(alpha: 0.8),
   ),
 );
 
@@ -1400,18 +1400,18 @@ Widget _inputField({
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF800020).withOpacity(0.6), size: 20),
-        labelStyle: TextStyle(color: const Color(0xFF800020).withOpacity(0.7), fontSize: 13),
-        hintStyle: TextStyle(color: const Color(0xFF800020).withOpacity(0.35), fontSize: 13),
+        prefixIcon: Icon(icon, color: const Color(0xFF800020).withValues(alpha: 0.6), size: 20),
+        labelStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.7), fontSize: 13),
+        hintStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.35), fontSize: 13),
         filled: true,
-        fillColor: const Color(0xFF800020).withOpacity(0.06),
+        fillColor: const Color(0xFF800020).withValues(alpha: 0.06),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withOpacity(0.2)),
+          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withOpacity(0.2)),
+          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

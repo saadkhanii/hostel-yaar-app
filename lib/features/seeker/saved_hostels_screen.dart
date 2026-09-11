@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 import 'package:hostel_yaar/core/routes/app_routes.dart';
 import 'package:hostel_yaar/core/routes/navigation_service.dart';
 import 'package:hostel_yaar/core/data/dummy_hostels.dart';
 
-// ── Saved Hostels Screen ────────────────────────────────────────────────────
+// â”€â”€ Saved Hostels Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Reached from the bottom nav "Saved" tab on the Seeker Dashboard. Reads from
-// SavedHostelsStore (see saved_hostels_store.dart) — the same store the
-// heart icon on HostelDetailScreen writes to — so anything saved there shows
+// SavedHostelsStore (see saved_hostels_store.dart) â€” the same store the
+// heart icon on HostelDetailScreen writes to â€” so anything saved there shows
 // up here immediately, and un-saving here updates the detail screen too.
 class SavedHostelsScreen extends StatefulWidget {
   const SavedHostelsScreen({super.key});
@@ -101,17 +101,17 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.favorite_border, size: 52, color: fg.withOpacity(0.3)),
+            Icon(Icons.favorite_border, size: 52, color: fg.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
               'No saved hostels yet',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withOpacity(0.8)),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.8)),
             ),
             const SizedBox(height: 6),
             Text(
               'Tap the heart on any hostel to save it here for later.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: fg.withOpacity(0.5)),
+              style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.5)),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -133,7 +133,7 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
   }
 }
 
-// ── Saved Hostel Card ────────────────────────────────────────────────────────
+// â”€â”€ Saved Hostel Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SavedHostelCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
   final int startingPrice;
@@ -162,9 +162,9 @@ class _SavedHostelCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.06),
+          color: maroon.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.18)),
+          border: Border.all(color: maroon.withValues(alpha: 0.18)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +173,7 @@ class _SavedHostelCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.12),
+                color: maroon.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.home_work_outlined, color: maroon, size: 28),
@@ -205,12 +205,12 @@ class _SavedHostelCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withOpacity(0.55)),
+                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withValues(alpha: 0.55)),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           hostel['city'] as String,
-                          style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.55)),
+                          style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.55)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -229,19 +229,19 @@ class _SavedHostelCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: maroon.withOpacity(0.1),
+                          color: maroon.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           hostel['type'] as String,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withOpacity(0.8)),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withValues(alpha: 0.8)),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: hasVacancy ? const Color(0xFF2E7D32).withOpacity(0.12) : Colors.orange.withOpacity(0.15),
+                          color: hasVacancy ? const Color(0xFF2E7D32).withValues(alpha: 0.12) : Colors.orange.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -256,7 +256,7 @@ class _SavedHostelCard extends StatelessWidget {
                       const Spacer(),
                       Text(
                         '${facilities.length} amenities',
-                        style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.5)),
                       ),
                     ],
                   ),

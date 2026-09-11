@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/data/dummy_hostels.dart';
 
-// ── Hostel List / Search Screen ────────────────────────────────────────────
+// â”€â”€ Hostel List / Search Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Reached from the Seeker Dashboard via "Browse All Hostels" / "Tell AI What
 // You Need" / "See all". Takes an optional initial search query as its
 // `arguments` string (kept nullable/loose to match how other screens in this
@@ -95,7 +95,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
     NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
   }
 
-  // ── Sort / Filter bottom sheet ─────────────────────────────────────────
+  // â”€â”€ Sort / Filter bottom sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   void _showFilterSheet() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     _PriceFilter tempPrice = _priceFilter;
@@ -129,7 +129,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
                 children: [
                   ('All', _PriceFilter.all),
                   ('Under Rs. 8,000', _PriceFilter.under8k),
-                  ('Rs. 8,000 – 12,000', _PriceFilter.from8kTo12k),
+                  ('Rs. 8,000 â€“ 12,000', _PriceFilter.from8kTo12k),
                   ('Above Rs. 12,000', _PriceFilter.above12k),
                 ].map((entry) {
                   final (label, value) = entry;
@@ -139,9 +139,9 @@ class _HostelListScreenState extends State<HostelListScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? maroon : maroon.withOpacity(0.08),
+                        color: selected ? maroon : maroon.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: selected ? maroon : maroon.withOpacity(0.25)),
+                        border: Border.all(color: selected ? maroon : maroon.withValues(alpha: 0.25)),
                       ),
                       child: Text(
                         label,
@@ -175,9 +175,9 @@ class _HostelListScreenState extends State<HostelListScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? maroon : maroon.withOpacity(0.08),
+                        color: selected ? maroon : maroon.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: selected ? maroon : maroon.withOpacity(0.25)),
+                        border: Border.all(color: selected ? maroon : maroon.withValues(alpha: 0.25)),
                       ),
                       child: Text(
                         label,
@@ -267,7 +267,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── Search + Filter row ─────────────────────────────────
+            // â”€â”€ Search + Filter row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
               child: Row(
@@ -276,13 +276,13 @@ class _HostelListScreenState extends State<HostelListScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: maroon.withOpacity(0.08),
+                        color: maroon.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: maroon.withOpacity(0.2)),
+                        border: Border.all(color: maroon.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.search, color: maroon.withOpacity(0.5)),
+                          Icon(Icons.search, color: maroon.withValues(alpha: 0.5)),
                           const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
@@ -291,7 +291,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
                               style: const TextStyle(fontSize: 14, color: maroon),
                               decoration: InputDecoration(
                                 hintText: 'Search by name or area...',
-                                hintStyle: TextStyle(color: maroon.withOpacity(0.4), fontSize: 14),
+                                hintStyle: TextStyle(color: maroon.withValues(alpha: 0.4), fontSize: 14),
                                 border: InputBorder.none,
                                 isDense: true,
                               ),
@@ -300,7 +300,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
                           if (_searchCtrl.text.isNotEmpty)
                             GestureDetector(
                               onTap: () => setState(() => _searchCtrl.clear()),
-                              child: Icon(Icons.close, size: 18, color: maroon.withOpacity(0.5)),
+                              child: Icon(Icons.close, size: 18, color: maroon.withValues(alpha: 0.5)),
                             ),
                         ],
                       ),
@@ -312,13 +312,13 @@ class _HostelListScreenState extends State<HostelListScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: _hasActiveFilters ? maroon : maroon.withOpacity(0.08),
+                        color: _hasActiveFilters ? maroon : maroon.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: maroon.withOpacity(_hasActiveFilters ? 1 : 0.2)),
+                        border: Border.all(color: maroon.withValues(alpha: _hasActiveFilters ? 1 : 0.2)),
                       ),
                       child: Icon(
                         Icons.tune,
-                        color: _hasActiveFilters ? Colors.white : maroon.withOpacity(0.6),
+                        color: _hasActiveFilters ? Colors.white : maroon.withValues(alpha: 0.6),
                         size: 20,
                       ),
                     ),
@@ -327,7 +327,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
               ),
             ),
 
-            // ── Type filter chips ────────────────────────────────────
+            // â”€â”€ Type filter chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SizedBox(
               height: 36,
               child: ListView(
@@ -342,9 +342,9 @@ class _HostelListScreenState extends State<HostelListScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? maroon : maroon.withOpacity(0.08),
+                          color: selected ? maroon : maroon.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: selected ? maroon : maroon.withOpacity(0.25)),
+                          border: Border.all(color: selected ? maroon : maroon.withValues(alpha: 0.25)),
                         ),
                         child: Text(
                           type,
@@ -363,7 +363,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
 
             const SizedBox(height: 12),
 
-            // ── Result count ──────────────────────────────────────────
+            // â”€â”€ Result count â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
@@ -371,7 +371,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
                 children: [
                   Text(
                     '${results.length} hostel${results.length == 1 ? '' : 's'} found',
-                    style: TextStyle(fontSize: 12, color: fg.withOpacity(0.5)),
+                    style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
                   ),
                   if (_hasActiveFilters)
                     GestureDetector(
@@ -381,7 +381,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
                       }),
                       child: Text(
                         'Clear filters',
-                        style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.7), decoration: TextDecoration.underline),
+                        style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.7), decoration: TextDecoration.underline),
                       ),
                     ),
                 ],
@@ -389,7 +389,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
             ),
             const SizedBox(height: 10),
 
-            // ── Results list ──────────────────────────────────────────
+            // â”€â”€ Results list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Expanded(
               child: results.isEmpty
                   ? _buildEmptyState(fg)
@@ -420,17 +420,17 @@ class _HostelListScreenState extends State<HostelListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.search_off, size: 52, color: fg.withOpacity(0.3)),
+            Icon(Icons.search_off, size: 52, color: fg.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
               'No hostels match your search',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withOpacity(0.8)),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.8)),
             ),
             const SizedBox(height: 6),
             Text(
               'Try a different keyword or adjust your filters.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: fg.withOpacity(0.5)),
+              style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -439,7 +439,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
   }
 }
 
-// ── Hostel Result Card ──────────────────────────────────────────────────────
+// â”€â”€ Hostel Result Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HostelResultCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
   final int startingPrice;
@@ -466,9 +466,9 @@ class _HostelResultCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withOpacity(0.06),
+          color: maroon.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withOpacity(0.18)),
+          border: Border.all(color: maroon.withValues(alpha: 0.18)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +477,7 @@ class _HostelResultCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: maroon.withOpacity(0.12),
+                color: maroon.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.home_work_outlined, color: maroon, size: 28),
@@ -512,12 +512,12 @@ class _HostelResultCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withOpacity(0.55)),
+                      Icon(Icons.location_on_outlined, size: 12, color: maroon.withValues(alpha: 0.55)),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           hostel['city'] as String,
-                          style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.55)),
+                          style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.55)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -529,19 +529,19 @@ class _HostelResultCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: maroon.withOpacity(0.1),
+                          color: maroon.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           hostel['type'] as String,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withOpacity(0.8)),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withValues(alpha: 0.8)),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: hasVacancy ? const Color(0xFF2E7D32).withOpacity(0.12) : Colors.orange.withOpacity(0.15),
+                          color: hasVacancy ? const Color(0xFF2E7D32).withValues(alpha: 0.12) : Colors.orange.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -565,7 +565,7 @@ class _HostelResultCard extends StatelessWidget {
                       ),
                       Text(
                         '${facilities.length} amenities',
-                        style: TextStyle(fontSize: 11, color: maroon.withOpacity(0.5)),
+                        style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.5)),
                       ),
                     ],
                   ),

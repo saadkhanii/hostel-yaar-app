@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 
@@ -12,7 +12,7 @@ class ManageHostelsScreen extends StatefulWidget {
 class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   static const maroon = Color(0xFF800020);
 
-  // ── Dummy data — replace with data fetched from Firestore ────────────
+  // â”€â”€ Dummy data â€” replace with data fetched from Firestore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   final List<Map<String, dynamic>> _hostels = [
     {
       'name': 'Green View Hostel',
@@ -50,12 +50,12 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
         title: const Text('Remove Hostel', style: TextStyle(color: maroon, fontWeight: FontWeight.bold)),
         content: Text(
           'Are you sure you want to remove "${_hostels[index]['name']}"? This cannot be undone.',
-          style: TextStyle(color: maroon.withOpacity(0.75)),
+          style: TextStyle(color: maroon.withValues(alpha: 0.75)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: maroon.withOpacity(0.6))),
+            child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
           ),
           TextButton(
             onPressed: () {
@@ -135,17 +135,17 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.home_work_outlined, size: 56, color: fg.withOpacity(0.3)),
+            Icon(Icons.home_work_outlined, size: 56, color: fg.withValues(alpha: 0.3)),
             const SizedBox(height: 16),
             Text(
               'No hostels listed yet',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg.withOpacity(0.8)),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg.withValues(alpha: 0.8)),
             ),
             const SizedBox(height: 6),
             Text(
               'Tap "Add Hostel" below to create your first listing.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: fg.withOpacity(0.5)),
+              style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -154,7 +154,7 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   }
 }
 
-// ── Hostel Listing Card ────────────────────────────────────────────────────
+// â”€â”€ Hostel Listing Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _HostelListingCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
   final bool isDark;
@@ -185,14 +185,14 @@ class _HostelListingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: maroon.withOpacity(0.06),
+        color: maroon.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: maroon.withOpacity(active ? 0.2 : 0.12)),
+        border: Border.all(color: maroon.withValues(alpha: active ? 0.2 : 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top row: thumbnail, name/city, status toggle ──────────
+          // â”€â”€ Top row: thumbnail, name/city, status toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -200,7 +200,7 @@ class _HostelListingCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: maroon.withOpacity(0.12),
+                  color: maroon.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.home_work_outlined, color: maroon, size: 26),
@@ -219,12 +219,12 @@ class _HostelListingCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 12, color: maroon.withOpacity(0.55)),
+                        Icon(Icons.location_on_outlined, size: 12, color: maroon.withValues(alpha: 0.55)),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
                             hostel['city'] as String,
-                            style: TextStyle(fontSize: 12, color: maroon.withOpacity(0.55)),
+                            style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.55)),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -234,12 +234,12 @@ class _HostelListingCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: maroon.withOpacity(0.1),
+                        color: maroon.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         hostel['type'] as String,
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withOpacity(0.8)),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: maroon.withValues(alpha: 0.8)),
                       ),
                     ),
                   ],
@@ -259,7 +259,7 @@ class _HostelListingCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: active ? activeGreen : maroon.withOpacity(0.4),
+                      color: active ? activeGreen : maroon.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -269,7 +269,7 @@ class _HostelListingCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Occupancy stats ────────────────────────────────────────
+          // â”€â”€ Occupancy stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             children: [
               Expanded(
@@ -290,7 +290,7 @@ class _HostelListingCard extends StatelessWidget {
                 child: _OccupancyStat(
                   label: 'Vacant',
                   value: '$vacantRooms',
-                  color: vacantRooms > 0 ? Colors.orange.shade800 : maroon.withOpacity(0.4),
+                  color: vacantRooms > 0 ? Colors.orange.shade800 : maroon.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -301,7 +301,7 @@ class _HostelListingCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: occupancyRatio,
               minHeight: 6,
-              backgroundColor: maroon.withOpacity(0.12),
+              backgroundColor: maroon.withValues(alpha: 0.12),
               valueColor: AlwaysStoppedAnimation(
                 vacantRooms == 0 ? activeGreen : maroon,
               ),
@@ -310,14 +310,14 @@ class _HostelListingCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Actions ────────────────────────────────────────────────
+          // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onEdit,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: maroon.withOpacity(0.4)),
+                    side: BorderSide(color: maroon.withValues(alpha: 0.4)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -330,7 +330,7 @@ class _HostelListingCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onDelete,
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.red.withOpacity(0.4)),
+                    side: BorderSide(color: Colors.red.withValues(alpha: 0.4)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -346,7 +346,7 @@ class _HostelListingCard extends StatelessWidget {
   }
 }
 
-// ── Small occupancy stat block used inside the card ─────────────────────────
+// â”€â”€ Small occupancy stat block used inside the card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _OccupancyStat extends StatelessWidget {
   final String label;
   final String value;
@@ -365,7 +365,7 @@ class _OccupancyStat extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: color.withOpacity(0.75)),
+          style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.75)),
         ),
       ],
     );
