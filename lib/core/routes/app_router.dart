@@ -3,10 +3,13 @@ import 'package:hostel_yaar/features/splash/splash_screen.dart';
 import 'package:hostel_yaar/features/splash/role_selection.dart';
 
 import '../../features/seeker/seeker_dashboard.dart';
+import '../../features/seeker/hostel_list.dart';
 import '../../features/seeker/hostel_detail.dart';
 import '../../features/warden/warden_dashboard.dart';
 import '../../features/warden/add_hostel.dart';
 import '../../features/warden/manage_hostels.dart';
+import '../../features/warden/warden_requests.dart';
+import '../../features/seeker/saved_hostels_screen.dart';
 import 'app_routes.dart';
 
 // Import your screens here as you create them
@@ -28,31 +31,27 @@ class AppRouter {
       case AppRoutes.seekerHome:
         return MaterialPageRoute(builder: (_) => const SeekerDashboard());
 
+      case AppRoutes.hostelList:
+        final query = settings.arguments as String?;
+        return MaterialPageRoute(builder: (_) => HostelListScreen(initialQuery: query));
+
+      case AppRoutes.hostelDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return MaterialPageRoute(
+          builder: (_) => HostelDetailScreen(hostel: args ?? HostelDetailScreen.sampleHostel),
+        );
+
       case AppRoutes.addHostel:
         return MaterialPageRoute(builder: (_) => const AddHostelScreen());
 
       case AppRoutes.manageHostel:
         return MaterialPageRoute(builder: (_) => const ManageHostelsScreen());
 
-      case AppRoutes.hostelList:
-      // TODO: replace with the real hostel browse/search results screen once built
-        return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(title: const Text('Hostels')),
-            body: const Center(child: Text('Coming soon')),
-          ),
-        );
+      case AppRoutes.wardenRequests:
+        return MaterialPageRoute(builder: (_) => const WardenRequestsScreen());
 
-      case AppRoutes.hostelDetail:
-      // Takes the full hostel data as a Map<String, dynamic> for now (see
-      // HostelDetailScreen's doc comment for the expected shape). Switch
-      // this to fetching by `hostelId` once a shared Hostel model / backend
-      // exists — the original TODO example below assumed that shape.
-        final args = settings.arguments as Map<String, dynamic>;
-        return MaterialPageRoute(
-          builder: (_) => HostelDetailScreen(hostel: args),
-        );
-
+      case AppRoutes.savedHostels:
+        return MaterialPageRoute(builder: (_) => const SavedHostelsScreen());
     // Add your routes here as you create screens
     // case AppRoutes.login:
     //   return MaterialPageRoute(builder: (_) => const LoginScreen());
@@ -65,6 +64,13 @@ class AppRouter {
 
     // case AppRoutes.home:
     //   return MaterialPageRoute(builder: (_) => const HomeScreen());
+
+    // For routes with parameters
+    // case AppRoutes.hostelDetail:
+    //   final args = settings.arguments as Map<String, dynamic>;
+    //   return MaterialPageRoute(
+    //     builder: (_) => HostelDetailScreen(hostelId: args['hostelId']),
+    //   );
 
       default:
         return MaterialPageRoute(

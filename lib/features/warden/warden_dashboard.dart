@@ -76,6 +76,9 @@ class WardenDashboard extends StatelessWidget {
                     value: '7',
                     icon: Icons.inbox_outlined,
                     isDark: isDark,
+                    onTap: () {
+                      NavigationService.navigateTo(AppRoutes.wardenRequests);
+                    },
                   ),
                 ],
               ),
@@ -156,6 +159,26 @@ class WardenDashboard extends StatelessWidget {
         unselectedItemColor: maroon.withOpacity(0.4),
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+            // Already on the dashboard — nothing to do.
+              break;
+            case 1:
+              NavigationService.navigateTo(AppRoutes.manageHostel);
+              break;
+            case 2:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Alerts — coming soon')),
+              );
+              break;
+            case 3:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Settings — coming soon')),
+              );
+              break;
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.home_work_outlined), label: 'Hostels'),
@@ -173,47 +196,53 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final bool isDark;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.label,
     required this.value,
     required this.icon,
     required this.isDark,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     const maroon = Color(0xFF800020);
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-        decoration: BoxDecoration(
-          color: maroon.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: maroon.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: maroon, size: 22),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: maroon,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          decoration: BoxDecoration(
+            color: maroon.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: maroon.withOpacity(0.2)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: maroon, size: 22),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: maroon,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                color: maroon.withOpacity(0.7),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: maroon.withOpacity(0.7),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

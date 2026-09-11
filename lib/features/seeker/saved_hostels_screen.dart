@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../routes/app_routes.dart';
-import '../routes/navigation_service.dart';
-import 'dummy_hostels.dart';
+import '../../core/data/saved_hostels_store.dart';
+import '../../core/routes/app_routes.dart';
+import '../../core/routes/navigation_service.dart';
+import '../../core/data/dummy_hostels.dart';
 
 // ── Saved Hostels Screen ────────────────────────────────────────────────────
 // Reached from the bottom nav "Saved" tab on the Seeker Dashboard. Reads from

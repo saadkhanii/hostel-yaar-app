@@ -1,71 +1,52 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/data/dummy_hostels.dart';
 
-// Builds a placeholder hostel-detail map from the summary fields already on
-// a dashboard card. Swap this for real per-hostel data (rooms, facilities,
-// photos, contact info) once a shared Hostel model / backend exists — for
-// now it lets tapping a card open a populated detail screen instead of
-// nothing.
-Map<String, dynamic> _demoHostelDetail({
-  required String name,
-  required String location,
-  required String price,
-  required String type,
-  required String rating,
-}) {
-  final priceNum = int.tryParse(price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 8000;
-  return {
-    'name': name,
-    'city': location,
-    'address': location,
-    'type': type,
-    'rating': double.tryParse(rating) ?? 4.0,
-    'reviewCount': 20,
-    'photos': <String>[],
-    'facilities': ['WiFi', 'Meals', 'CCTV'],
-    'phone': '+92 300 0000000',
-    'whatsapp': '+92 300 0000000',
-    'inAppChat': true,
-    'rooms': [
-      {
-        'number': '1',
-        'bookingType': 'Room',
-        'roomType': 2,
-        'availableSeats': 2,
-        'attachedWashroom': true,
-        'price': priceNum,
-        'advance': priceNum,
-        'vacant': true,
-      },
-    ],
-  };
-}
-
-void _openHostelDetail(
-    BuildContext context, {
-      required String name,
-      required String location,
-      required String price,
-      required String type,
-      required String rating,
-    }) {
+void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   // Routed through AppRouter/AppRoutes.hostelDetail like every other screen
   // in this app, rather than a direct Navigator.push — see app_router.dart.
-  NavigationService.navigateTo(
-    AppRoutes.hostelDetail,
-    arguments: _demoHostelDetail(
-      name: name,
-      location: location,
-      price: price,
-      type: type,
-      rating: rating,
-    ),
-  );
+  NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
 }
 
-class SeekerDashboard extends StatelessWidget {
+class SeekerDashboard extends StatefulWidget {
   const SeekerDashboard({super.key});
+
+  @override
+  State<SeekerDashboard> createState() => _SeekerDashboardState();
+}
+
+class _SeekerDashboardState extends State<SeekerDashboard> {
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goToSearch([String? query]) {
+    NavigationService.navigateTo(AppRoutes.hostelList, arguments: query);
+  }
+
+  void _onNavTap(int index) {
+    switch (index) {
+      case 0:
+      // Already on the dashboard — nothing to do.
+        break;
+      case 1:
+        _goToSearch();
+        break;
+      case 2:
+        NavigationService.navigateTo(AppRoutes.savedHostels);
+        break;
+      case 3:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile — coming soon')),
+        );
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +111,8 @@ class SeekerDashboard extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
+                        controller: _searchCtrl,
+                        onSubmitted: (q) => _goToSearch(q),
                         decoration: InputDecoration(
                           hintText: 'Search hostels in your city...',
                           hintStyle: TextStyle(
@@ -140,7 +123,10 @@ class SeekerDashboard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Icon(Icons.tune, color: maroon.withOpacity(0.5)),
+                    GestureDetector(
+                      onTap: () => _goToSearch(),
+                      child: Icon(Icons.tune, color: maroon.withOpacity(0.5)),
+                    ),
                   ],
                 ),
               ),
@@ -160,9 +146,7 @@ class SeekerDashboard extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      NavigationService.navigateTo(AppRoutes.hostelList);
-                    },
+                    onTap: () => _goToSearch(),
                     child: Text(
                       'See all',
                       style: TextStyle(
@@ -184,61 +168,23 @@ class SeekerDashboard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // AI Recommendation Cards (horizontal scroll)
+              // AI Recommendation Cards (horizontal scroll) — top matches
+              // from the shared dummy dataset, sorted by matchPercent.
               SizedBox(
                 height: 190,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: [
-                    _HostelCard(
-                      name: 'Green View Hostel',
-                      location: 'Gulberg, Lahore',
-                      price: 'Rs. 8,000/mo',
-                      type: 'Boys',
-                      rating: '4.5',
-                      matchPercent: '94%',
-                      onTap: () => _openHostelDetail(
-                        context,
-                        name: 'Green View Hostel',
-                        location: 'Gulberg, Lahore',
-                        price: 'Rs. 8,000/mo',
-                        type: 'Boys',
-                        rating: '4.5',
-                      ),
-                    ),
-                    _HostelCard(
-                      name: 'Sunrise Boys Hostel',
-                      location: 'Model Town, Lahore',
-                      price: 'Rs. 7,500/mo',
-                      type: 'Boys',
-                      rating: '4.2',
-                      matchPercent: '88%',
-                      onTap: () => _openHostelDetail(
-                        context,
-                        name: 'Sunrise Boys Hostel',
-                        location: 'Model Town, Lahore',
-                        price: 'Rs. 7,500/mo',
-                        type: 'Boys',
-                        rating: '4.2',
-                      ),
-                    ),
-                    _HostelCard(
-                      name: 'Al-Noor Girls Hostel',
-                      location: 'Johar Town, Lahore',
-                      price: 'Rs. 9,000/mo',
-                      type: 'Girls',
-                      rating: '4.7',
-                      matchPercent: '81%',
-                      onTap: () => _openHostelDetail(
-                        context,
-                        name: 'Al-Noor Girls Hostel',
-                        location: 'Johar Town, Lahore',
-                        price: 'Rs. 9,000/mo',
-                        type: 'Girls',
-                        rating: '4.7',
-                      ),
-                    ),
-                  ],
+                  children: DummyHostels.topRecommended().map((hostel) {
+                    return _HostelCard(
+                      name: hostel['name'] as String,
+                      location: hostel['city'] as String,
+                      price: 'Rs. ${DummyHostels.startingPrice(hostel)}/mo',
+                      type: hostel['type'] as String,
+                      rating: (hostel['rating'] as double).toStringAsFixed(1),
+                      matchPercent: '${hostel['matchPercent']}%',
+                      onTap: () => _openHostelDetail(context, hostel),
+                    );
+                  }).toList(),
                 ),
               ),
 
@@ -261,9 +207,7 @@ class SeekerDashboard extends StatelessWidget {
                 subtitle: 'Answer a few questions, get matched instantly',
                 icon: Icons.auto_awesome,
                 isDark: isDark,
-                onTap: () {
-                  NavigationService.navigateTo(AppRoutes.hostelList);
-                },
+                onTap: () => _goToSearch(),
               ),
               const SizedBox(height: 12),
               // Browse All Button
@@ -272,9 +216,7 @@ class SeekerDashboard extends StatelessWidget {
                 subtitle: 'See all available hostels in your city',
                 icon: Icons.location_city_outlined,
                 isDark: isDark,
-                onTap: () {
-                  NavigationService.navigateTo(AppRoutes.hostelList);
-                },
+                onTap: () => _goToSearch(),
               ),
 
               const SizedBox(height: 28),
@@ -292,7 +234,7 @@ class SeekerDashboard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '12 hostels',
+                    '${DummyHostels.all.length} hostels',
                     style: TextStyle(
                       fontSize: 12,
                       color: fg.withOpacity(0.5),
@@ -302,66 +244,16 @@ class SeekerDashboard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              _HostelListTile(
-                name: 'Green View Hostel',
-                location: 'Gulberg, Lahore',
-                price: 'Rs. 8,000/mo',
-                type: 'Boys',
-                rating: '4.5',
-                onTap: () => _openHostelDetail(
-                  context,
-                  name: 'Green View Hostel',
-                  location: 'Gulberg, Lahore',
-                  price: 'Rs. 8,000/mo',
-                  type: 'Boys',
-                  rating: '4.5',
-                ),
-              ),
-              _HostelListTile(
-                name: 'Sunrise Boys Hostel',
-                location: 'Model Town, Lahore',
-                price: 'Rs. 7,500/mo',
-                type: 'Boys',
-                rating: '4.2',
-                onTap: () => _openHostelDetail(
-                  context,
-                  name: 'Sunrise Boys Hostel',
-                  location: 'Model Town, Lahore',
-                  price: 'Rs. 7,500/mo',
-                  type: 'Boys',
-                  rating: '4.2',
-                ),
-              ),
-              _HostelListTile(
-                name: 'Al-Noor Girls Hostel',
-                location: 'Johar Town, Lahore',
-                price: 'Rs. 9,000/mo',
-                type: 'Girls',
-                rating: '4.7',
-                onTap: () => _openHostelDetail(
-                  context,
-                  name: 'Al-Noor Girls Hostel',
-                  location: 'Johar Town, Lahore',
-                  price: 'Rs. 9,000/mo',
-                  type: 'Girls',
-                  rating: '4.7',
-                ),
-              ),
-              _HostelListTile(
-                name: 'City Comfort Hostel',
-                location: 'DHA Phase 5, Lahore',
-                price: 'Rs. 11,000/mo',
-                type: 'Mixed',
-                rating: '4.0',
-                onTap: () => _openHostelDetail(
-                  context,
-                  name: 'City Comfort Hostel',
-                  location: 'DHA Phase 5, Lahore',
-                  price: 'Rs. 11,000/mo',
-                  type: 'Mixed',
-                  rating: '4.0',
-                ),
-              ),
+              ...DummyHostels.all.map((hostel) {
+                return _HostelListTile(
+                  name: hostel['name'] as String,
+                  location: hostel['city'] as String,
+                  price: 'Rs. ${DummyHostels.startingPrice(hostel)}/mo',
+                  type: hostel['type'] as String,
+                  rating: (hostel['rating'] as double).toStringAsFixed(1),
+                  onTap: () => _openHostelDetail(context, hostel),
+                );
+              }),
             ],
           ),
         ),
@@ -374,6 +266,7 @@ class SeekerDashboard extends StatelessWidget {
         unselectedItemColor: maroon.withOpacity(0.4),
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
+        onTap: _onNavTap,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),

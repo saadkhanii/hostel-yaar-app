@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 
 // ── Hostel Detail Screen ───────────────────────────────────────────────────
 // Shown when a seeker taps a hostel card/tile on the dashboard. Takes a
@@ -80,8 +81,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   final PageController _photoController = PageController();
   int _currentPhoto = 0;
-  // Local-only for now — no persistence until a saved-hostels store exists.
-  bool _saved = false;
 
   static const Map<String, IconData> _facilityIcons = {
     'WiFi': Icons.wifi,
@@ -186,10 +185,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              _saved ? Icons.favorite : Icons.favorite_border,
+              SavedHostelsStore.instance.isSaved(hostel)
+                  ? Icons.favorite
+                  : Icons.favorite_border,
               color: maroon,
             ),
-            onPressed: () => setState(() => _saved = !_saved),
+            onPressed: () => setState(() => SavedHostelsStore.instance.toggle(hostel)),
           ),
         ],
       ),
