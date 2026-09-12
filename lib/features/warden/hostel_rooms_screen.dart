@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Warden-facing screen for a single hostel: shows every room with its
@@ -7,22 +7,22 @@ import 'package:flutter/services.dart';
 /// from 20 Sep"), add brand-new rooms, or remove rooms entirely.
 ///
 /// The hostel's "total rooms" is simply the length of this list, so
-/// adding/removing a room here already IS updating the total room count â€”
+/// adding/removing a room here already IS updating the total room count —
 /// there's no separate counter to keep in sync.
 ///
 /// Pass the hostel's current room list in, and use the value this screen
 /// pops with (via the back button) to write the edits back to the caller:
 ///
-///   final updated = await Navigator.push{@literal {@literal <}}List{@literal <}Map{@literal <}String, dynamic{@literal >}{@literal >}{@literal {@literal >}}(
+///   final updated = await Navigator.push<List<Map<String, dynamic>>>(
 ///     context,
 ///     MaterialPageRoute(
-///       builder: (_) ={@literal >} HostelRoomsScreen(hostelName: name, rooms: rooms),
+///       builder: (_) => HostelRoomsScreen(hostelName: name, rooms: rooms),
 ///     ),
 ///   );
-///   if (updated != null) setState(() ={@literal >} hostel['rooms'] = updated);
+///   if (updated != null) setState(() => hostel['rooms'] = updated);
 class HostelRoomsScreen extends StatefulWidget {
   final String hostelName;
-  final List{@literal <}Map{@literal <}String, dynamic{@literal >}{@literal >} rooms;
+  final List<Map<String, dynamic>> rooms;
 
   const HostelRoomsScreen({
     super.key,
@@ -31,26 +31,26 @@ class HostelRoomsScreen extends StatefulWidget {
   });
 
   @override
-  State{@literal <}HostelRoomsScreen{@literal >} createState() ={@literal >} _HostelRoomsScreenState();
+  State<HostelRoomsScreen> createState() => _HostelRoomsScreenState();
 }
 
-class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@literal >} {
+class _HostelRoomsScreenState extends State<HostelRoomsScreen> {
   static const maroon = Color(0xFF800020);
-  static const List{@literal <}int{@literal >} _roomTypeOptions = [1, 2, 3, 4, 5, 6];
+  static const List<int> _roomTypeOptions = [1, 2, 3, 4, 5, 6];
 
-  late List{@literal <}Map{@literal <}String, dynamic{@literal >}{@literal >} _rooms;
+  late List<Map<String, dynamic>> _rooms;
 
   @override
   void initState() {
     super.initState();
     // Work on a copy so nothing mutates the caller's list until we
     // explicitly hand the edited version back on pop.
-    _rooms = widget.rooms.map((r) ={@literal >} Map{@literal <}String, dynamic{@literal >}.from(r)).toList();
+    _rooms = widget.rooms.map((r) => Map<String, dynamic>.from(r)).toList();
   }
 
-  int get _totalSeats ={@literal >} _rooms.fold{@literal <}int{@literal {@literal >}}(0, (s, r) ={@literal >} s + (r['roomType'] as int));
+  int get _totalSeats => _rooms.fold<int>(0, (s, r) => s + (r['roomType'] as int));
 
-  int get _vacantSeats ={@literal >} _rooms.fold{@literal <}int{@literal {@literal >}}(0, (s, r) {
+  int get _vacantSeats => _rooms.fold<int>(0, (s, r) {
     if (r['bookingType'] == 'Seat') return s + (r['availableSeats'] as int);
     return s + (r['vacant'] == true ? (r['roomType'] as int) : 0);
   });
@@ -59,7 +59,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
-      builder: (context) ={@literal >} AlertDialog(
+      builder: (context) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Remove Room', style: TextStyle(color: maroon, fontWeight: FontWeight.bold)),
@@ -69,12 +69,12 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
         ),
         actions: [
           TextButton(
-            onPressed: () ={@literal >} Navigator.pop(context),
+            onPressed: () => Navigator.pop(context),
             child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
           ),
           TextButton(
             onPressed: () {
-              setState(() ={@literal >} _rooms.removeAt(index));
+              setState(() => _rooms.removeAt(index));
               Navigator.pop(context);
             },
             child: const Text('Remove', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
@@ -84,7 +84,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
     );
   }
 
-  // â”€â”€ Add / Edit Room sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Add / Edit Room sheet ──────────────────────────────────────────
   void _showRoomSheet({int? existingIndex}) {
     final existing = existingIndex != null ? _rooms[existingIndex] : null;
 
@@ -102,9 +102,9 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
 
     // Seats/rooms that are occupied right now but scheduled to become
     // free on a known future date.
-    List{@literal <}Map{@literal <}String, dynamic{@literal >}{@literal >} upcomingVacancies = existing != null && existing['upcomingVacancies'] != null
-        ? (existing['upcomingVacancies'] as List).map((v) ={@literal >} Map{@literal <}String, dynamic{@literal >}.from(v as Map)).toList()
-        : {@literal <}Map{@literal <}String, dynamic{@literal >}{@literal >}[];
+    List<Map<String, dynamic>> upcomingVacancies = existing != null && existing['upcomingVacancies'] != null
+        ? (existing['upcomingVacancies'] as List).map((v) => Map<String, dynamic>.from(v as Map)).toList()
+        : <Map<String, dynamic>>[];
 
     showModalBottomSheet(
       context: context,
@@ -113,9 +113,9 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
           ? const Color(0xFF1D2128)
           : const Color(0xFFF3E6D5),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) ={@literal >} StatefulBuilder(
+      builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
-          Future{@literal <}void{@literal >} addVacancy() async {
+          Future<void> addVacancy() async {
             int seats = 1;
             DateTime date = DateTime.now().add(const Duration(days: 1));
             await showModalBottomSheet(
@@ -125,8 +125,8 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                   ? const Color(0xFF1D2128)
                   : const Color(0xFFF3E6D5),
               shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-              builder: (context) ={@literal >} StatefulBuilder(
-                builder: (context, setVacancySheetState) ={@literal >} Padding(
+              builder: (context) => StatefulBuilder(
+                builder: (context, setVacancySheetState) => Padding(
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
@@ -148,12 +148,12 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                         Row(
                           children: [
                             IconButton(
-                              onPressed: seats {@literal >} 1 ? () ={@literal >} setVacancySheetState(() ={@literal >} seats--) : null,
+                              onPressed: seats > 1 ? () => setVacancySheetState(() => seats--) : null,
                               icon: const Icon(Icons.remove_circle_outline, color: maroon),
                             ),
                             Text('$seats', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: maroon)),
                             IconButton(
-                              onPressed: seats {@literal <} roomType ? () ={@literal >} setVacancySheetState(() ={@literal >} seats++) : null,
+                              onPressed: seats < roomType ? () => setVacancySheetState(() => seats++) : null,
                               icon: const Icon(Icons.add_circle_outline, color: maroon),
                             ),
                           ],
@@ -171,7 +171,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                         context: context,
                         label: 'Vacant From',
                         date: date,
-                        onPick: (picked) ={@literal >} setVacancySheetState(() ={@literal >} date = picked),
+                        onPick: (picked) => setVacancySheetState(() => date = picked),
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
@@ -234,7 +234,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                       final selected = bookingType == value;
                       return Expanded(
                         child: GestureDetector(
-                          onTap: () ={@literal >} setSheetState(() {
+                          onTap: () => setSheetState(() {
                             bookingType = value;
                             if (bookingType == 'Room') {
                               availableSeatsCtrl.text = roomVacant ? roomType.toString() : '0';
@@ -269,15 +269,15 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _roomTypeOptions.length,
-                      separatorBuilder: (_, __) ={@literal >} const SizedBox(width: 8),
+                      separatorBuilder: (_, __) => const SizedBox(width: 8),
                       itemBuilder: (context, i) {
                         final type = _roomTypeOptions[i];
                         final selected = roomType == type;
                         return GestureDetector(
-                          onTap: () ={@literal >} setSheetState(() {
+                          onTap: () => setSheetState(() {
                             roomType = type;
                             final currentAvailable = int.tryParse(availableSeatsCtrl.text) ?? 0;
-                            if (bookingType == 'Room' || currentAvailable {@literal >} roomType) {
+                            if (bookingType == 'Room' || currentAvailable > roomType) {
                               availableSeatsCtrl.text = roomType.toString();
                             }
                             errorText = null;
@@ -312,7 +312,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                         final selected = roomVacant == value;
                         return Expanded(
                           child: GestureDetector(
-                            onTap: () ={@literal >} setSheetState(() {
+                            onTap: () => setSheetState(() {
                               roomVacant = value;
                               availableSeatsCtrl.text = value ? roomType.toString() : '0';
                             }),
@@ -338,12 +338,12 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                     const SizedBox(height: 14),
                     _field(
                       controller: availableSeatsCtrl,
-                      label: 'Seats Currently Vacant (0 â€“ $roomType)',
+                      label: 'Seats Currently Vacant (0 – $roomType)',
                       hint: '0 if fully occupied',
                       icon: Icons.event_seat_outlined,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (_) ={@literal >} setSheetState(() ={@literal >} errorText = null),
+                      onChanged: (_) => setSheetState(() => errorText = null),
                     ),
                   ],
                   const SizedBox(height: 14),
@@ -361,14 +361,14 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                         const Expanded(child: Text('Attached Washroom', style: TextStyle(fontSize: 14, color: maroon))),
                         Switch(
                           value: attachedWashroom,
-                          onChanged: (v) ={@literal >} setSheetState(() ={@literal >} attachedWashroom = v),
+                          onChanged: (v) => setSheetState(() => attachedWashroom = v),
                           activeThumbColor: maroon,
                         ),
                       ],
                     ),
                   ),
 
-                  // Upcoming vacancies â€” occupied seats/rooms scheduled to
+                  // Upcoming vacancies — occupied seats/rooms scheduled to
                   // free up on a known future date (e.g. "2 seats vacant
                   // from 20 Sep" because a tenant gave notice).
                   const SizedBox(height: 18),
@@ -409,7 +409,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                             ),
                             IconButton(
                               icon: const Icon(Icons.close, size: 16, color: maroon),
-                              onPressed: () ={@literal >} setSheetState(() ={@literal >} upcomingVacancies.removeAt(vi)),
+                              onPressed: () => setSheetState(() => upcomingVacancies.removeAt(vi)),
                             ),
                           ],
                         ),
@@ -432,21 +432,21 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                       onPressed: () {
                         final roomNum = roomNumCtrl.text.trim();
                         if (roomNum.isEmpty) {
-                          setSheetState(() ={@literal >} errorText = 'Room number/name is required');
+                          setSheetState(() => errorText = 'Room number/name is required');
                           return;
                         }
-                        final isDuplicate = _rooms.asMap().entries.any((entry) ={@literal >}
+                        final isDuplicate = _rooms.asMap().entries.any((entry) =>
                         entry.key != existingIndex &&
                             (entry.value['number'] as String).toLowerCase() == roomNum.toLowerCase());
                         if (isDuplicate) {
-                          setSheetState(() ={@literal >} errorText = 'Room "$roomNum" already exists');
+                          setSheetState(() => errorText = 'Room "$roomNum" already exists');
                           return;
                         }
                         final seatsText = availableSeatsCtrl.text.trim();
                         final parsedSeats = int.tryParse(seatsText);
                         final available = bookingType == 'Room' ? (roomVacant ? roomType : 0) : (parsedSeats ?? -1);
-                        if (bookingType == 'Seat' && (seatsText.isEmpty || available {@literal <} 0 || available {@literal >} roomType)) {
-                          setSheetState(() ={@literal >} errorText = 'Vacant seats must be between 0 and $roomType');
+                        if (bookingType == 'Seat' && (seatsText.isEmpty || available < 0 || available > roomType)) {
+                          setSheetState(() => errorText = 'Vacant seats must be between 0 and $roomType');
                           return;
                         }
 
@@ -456,11 +456,11 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                           'roomType': roomType,
                           'availableSeats': available,
                           'attachedWashroom': attachedWashroom,
-                          'vacant': bookingType == 'Room' ? roomVacant : (available {@literal >} 0),
+                          'vacant': bookingType == 'Room' ? roomVacant : (available > 0),
                           'price': existing?['price'] ?? 0,
                           'advance': existing?['advance'] ?? 0,
                           // Carried over as-is; set from the Add Hostel flow.
-                          'availabilityDates': existing?['availabilityDates'] ?? {@literal <}String{@literal >}[],
+                          'availabilityDates': existing?['availabilityDates'] ?? <String>[],
                           'availabilitySameDate': existing?['availabilitySameDate'] ?? true,
                           'upcomingVacancies': upcomingVacancies,
                         };
@@ -506,7 +506,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
           elevation: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back_ios, color: fg, size: 18),
-            onPressed: () ={@literal >} Navigator.pop(context, _rooms),
+            onPressed: () => Navigator.pop(context, _rooms),
           ),
           title: Text(widget.hostelName, style: TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.bold)),
           centerTitle: true,
@@ -540,10 +540,10 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
                     : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   itemCount: _rooms.length,
-                  itemBuilder: (context, i) ={@literal >} _ManagedRoomCard(
+                  itemBuilder: (context, i) => _ManagedRoomCard(
                     room: _rooms[i],
-                    onEdit: () ={@literal >} _showRoomSheet(existingIndex: i),
-                    onDelete: () ={@literal >} _confirmDeleteRoom(i),
+                    onEdit: () => _showRoomSheet(existingIndex: i),
+                    onDelete: () => _confirmDeleteRoom(i),
                   ),
                 ),
               ),
@@ -554,7 +554,7 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
           backgroundColor: maroon,
           icon: const Icon(Icons.add, color: Colors.white),
           label: const Text('Add Room', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-          onPressed: () ={@literal >} _showRoomSheet(),
+          onPressed: () => _showRoomSheet(),
         ),
       ),
     );
@@ -571,14 +571,14 @@ class _HostelRoomsScreenState extends State{@literal <}HostelRoomsScreen{@litera
   }
 }
 
-String _formatDate(DateTime d) ={@literal >} '${d.day}/${d.month}/${d.year}';
+String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
-// â”€â”€ Reusable date-picker row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Reusable date-picker row ──────────────────────────────────────────
 Widget _datePickerField({
   required BuildContext context,
   required String label,
   required DateTime date,
-  required ValueChanged{@literal <}DateTime{@literal >} onPick,
+  required ValueChanged<DateTime> onPick,
 }) {
   const maroon = Color(0xFF800020);
   return GestureDetector(
@@ -610,14 +610,14 @@ Widget _datePickerField({
   );
 }
 
-// â”€â”€ Reusable text field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Reusable text field ────────────────────────────────────────────────
 Widget _field({
   TextEditingController? controller,
   required String label,
   required String hint,
   required IconData icon,
   TextInputType keyboardType = TextInputType.text,
-  List{@literal <}TextInputFormatter{@literal >}? inputFormatters,
+  List<TextInputFormatter>? inputFormatters,
   void Function(String)? onChanged,
 }) {
   const maroon = Color(0xFF800020);
@@ -642,9 +642,9 @@ Widget _field({
   );
 }
 
-// â”€â”€ Room card shown in the list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Room card shown in the list ─────────────────────────────────────────
 class _ManagedRoomCard extends StatelessWidget {
-  final Map{@literal <}String, dynamic{@literal >} room;
+  final Map<String, dynamic> room;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -658,8 +658,8 @@ class _ManagedRoomCard extends StatelessWidget {
     final roomType = room['roomType'] as int;
     final availableSeats = room['availableSeats'] as int;
     final vacant = room['vacant'] == true;
-    final upcoming = (room['upcomingVacancies'] as List?)?.cast{@literal <}Map{@literal <}String, dynamic{@literal >}{@literal {@literal >}}() ?? [];
-    final bool currentlyFree = bookingType == 'Room' ? vacant : availableSeats {@literal >} 0;
+    final upcoming = (room['upcomingVacancies'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final bool currentlyFree = bookingType == 'Room' ? vacant : availableSeats > 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -704,7 +704,7 @@ class _ManagedRoomCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '$roomType Seater â€¢ ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'} â€¢ '
+            '$roomType Seater • ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'} • '
                 '${room['attachedWashroom'] == true ? 'Attached WR' : 'Shared WR'}',
             style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
           ),
