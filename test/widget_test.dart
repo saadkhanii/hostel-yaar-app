@@ -11,20 +11,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hostel_yaar/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('App builds and provides a MaterialApp', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Let any startup timers (e.g. splash screen navigation) run
+    await tester.pump(const Duration(seconds: 3));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // The app should contain a MaterialApp
+    expect(find.byType(MaterialApp), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Optional: initial route is splash; ensure navigator exists
+    expect(find.byType(Navigator), findsOneWidget);
   });
 }
