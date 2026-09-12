@@ -13,13 +13,15 @@ import 'package:flutter/services.dart';
 /// Pass the hostel's current room list in, and use the value this screen
 /// pops with (via the back button) to write the edits back to the caller:
 ///
-///   final updated = await Navigator.push<List<Map<String, dynamic>>>(
-///     context,
-///     MaterialPageRoute(
-///       builder: (_) => HostelRoomsScreen(hostelName: name, rooms: rooms),
-///     ),
-///   );
-///   if (updated != null) setState(() => hostel['rooms'] = updated);
+/// ```dart
+/// final updated = await Navigator.push<List<Map<String, dynamic>>>(
+///   context,
+///   MaterialPageRoute(
+///     builder: (_) => HostelRoomsScreen(hostelName: name, rooms: rooms),
+///   ),
+/// );
+/// if (updated != null) setState(() => hostel['rooms'] = updated);
+/// ```
 class HostelRoomsScreen extends StatefulWidget {
   final String hostelName;
   final List<Map<String, dynamic>> rooms;
