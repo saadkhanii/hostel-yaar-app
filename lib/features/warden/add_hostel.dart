@@ -14,14 +14,14 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
 
-  // â”€â”€ Basic Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Basic Info ─────────────────────────────────────────────
   final _nameCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _totalRoomsCtrl = TextEditingController();
   String _selectedType = 'Boys';
 
-  // â”€â”€ Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Rooms ──────────────────────────────────────────────────
   final List<Map<String, dynamic>> _rooms = [];
 
   // Parses the "Total rooms in hostel" field from Step 1. Used to gate
@@ -29,9 +29,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   // hostel actually has.
   int? get _declaredTotalRooms => int.tryParse(_totalRoomsCtrl.text.trim());
 
-  // â”€â”€ Pricing (rent & advance security are both set per-room) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Pricing (rent & advance security are both set per-room) ──────────
 
-  // â”€â”€ Facilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Facilities ─────────────────────────────────────────────
   final Map<String, bool> _facilities = {
     'WiFi': false,
     'Meals': false,
@@ -44,12 +44,12 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     'Water Cooler': false,
   };
 
-  // â”€â”€ Contact â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Contact ────────────────────────────────────────────────
   final _phoneCtrl = TextEditingController();
   final _whatsappCtrl = TextEditingController();
   bool _inAppChat = true;
 
-  // â”€â”€ Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Photos ─────────────────────────────────────────────────
   final List<String> _photos = []; // will hold file paths
 
   @override
@@ -90,10 +90,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
       ),
       body: Column(
         children: [
-          // â”€â”€ Step Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Step Indicator ───────────────────────────────────
           _StepIndicator(currentStep: _currentStep),
 
-          // â”€â”€ Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Form ─────────────────────────────────────────────
           Expanded(
             child: Form(
               key: _formKey,
@@ -104,7 +104,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ),
           ),
 
-          // â”€â”€ Bottom Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Bottom Buttons ────────────────────────────────────
           _BottomButtons(
             currentStep: _currentStep,
             totalSteps: 5,
@@ -134,7 +134,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     }
   }
 
-  // â”€â”€ Step 1: Basic Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step 1: Basic Info ────────────────────────────────────────────────────
   Widget _buildBasicInfo(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +217,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // â”€â”€ Step 2: Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step 2: Rooms ─────────────────────────────────────────────────────────
   Widget _buildRooms(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +230,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Availability summary â€” lets the warden see at a glance how many
+        // Availability summary — lets the warden see at a glance how many
         // Complete Rooms are vacant vs. filled, and how many individual
         // seats are open across Per Seat rooms.
         if (_rooms.isNotEmpty) _buildAvailabilitySummary(fg),
@@ -294,7 +294,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
   // Summarizes booking availability across all added rooms: how many
   // Complete Rooms are vacant/filled, and how many total seats are open
-  // across Per Seat rooms â€” so the warden can see booking capacity at a
+  // across Per Seat rooms — so the warden can see booking capacity at a
   // glance while adding rooms.
   Widget _buildAvailabilitySummary(Color fg) {
     final completeRooms = _rooms.where((r) => r['bookingType'] == 'Room').toList();
@@ -368,7 +368,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               ),
             ),
             Text(
-              '$label â€¢ $sublabel',
+              '$label • $sublabel',
               style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.6)),
             ),
           ],
@@ -377,7 +377,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // â”€â”€ Step 3: Pricing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step 3: Pricing ───────────────────────────────────────────────────────
   Widget _buildPricing(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -403,7 +403,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Add your rooms first â€” you\'ll set the rent and advance for each one here.',
+                    'Add your rooms first — you\'ll set the rent and advance for each one here.',
                     style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.7)),
                   ),
                 ),
@@ -442,7 +442,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'â€¢ ${room['roomType']} Seater',
+                        '• ${room['roomType']} Seater',
                         style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                       ),
                     ],
@@ -479,7 +479,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // â”€â”€ Step 4: Facilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step 4: Facilities ────────────────────────────────────────────────────
   Widget _buildFacilities(Color fg) {
     final icons = {
       'WiFi': Icons.wifi,
@@ -550,7 +550,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // â”€â”€ Step 5: Contact & Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Step 5: Contact & Photos ──────────────────────────────────────────────
   Widget _buildContactAndPhotos(Color fg) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +673,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     );
   }
 
-  // â”€â”€ Add Room Bottom Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Add Room Bottom Sheet ─────────────────────────────────────────────────
   // Room types available: 1 (Single) through 6 seater.
   static const List<int> _roomTypeOptions = [1, 2, 3, 4, 5, 6];
 
@@ -692,10 +692,28 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     // NOTE: `?? true` defaults missing 'vacant' to Vacant. Harmless now
     // since all rooms are created fresh in this session, but once rooms
     // are loaded back from Firestore, older documents saved before this
-    // field existed will silently read as Vacant â€” revisit if that
+    // field existed will silently read as Vacant — revisit if that
     // matters (e.g. migrate on read, or default to Filled instead).
     bool roomVacant = existing?['vacant'] ?? true;
     String? errorText;
+
+    // When some seats are being marked available, the warden can say
+    // when they're actually free to move into — either the same date
+    // for every available seat, or a different date per seat.
+    bool sameDateForAll = existing?['availabilitySameDate'] ?? true;
+    List<DateTime> availabilityDates = existing != null && existing['availabilityDates'] != null
+        ? (existing['availabilityDates'] as List).map((s) => DateTime.parse(s as String)).toList()
+        : <DateTime>[];
+
+    void syncAvailabilityDates(int count) {
+      if (count > availabilityDates.length) {
+        availabilityDates.addAll(
+          List.generate(count - availabilityDates.length, (_) => DateTime.now()),
+        );
+      } else if (count < availabilityDates.length) {
+        availabilityDates.removeRange(count, availabilityDates.length);
+      }
+    }
 
     // For a Complete Room booking, available seats always equals the room
     // type (the whole room is the unit), so there's nothing to ask for.
@@ -704,6 +722,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           ? existing['availableSeats'].toString()
           : (bookingType == 'Room' ? roomType.toString() : ''),
     );
+
+    // Make sure the initial list already matches the starting seat count.
+    // For a Complete Room that's Vacant, there's just the one "Available
+    // From" date for the whole room.
+    if (bookingType == 'Seat') {
+      syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
+    } else if (bookingType == 'Room' && roomVacant) {
+      syncAvailabilityDates(1);
+    }
 
     showModalBottomSheet(
       context: context,
@@ -758,6 +785,13 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                           // per-seat listings start with none marked available yet.
                           if (bookingType == 'Room') {
                             availableSeatsCtrl.text = roomType.toString();
+                            if (roomVacant) {
+                              syncAvailabilityDates(1);
+                            } else {
+                              availabilityDates.clear();
+                            }
+                          } else {
+                            syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
                           }
                           errorText = null;
                         }),
@@ -795,7 +829,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   ),
                 ),
 
-                // 1b. Room Status (Vacant / Filled) â€” only relevant for
+                // 1b. Room Status (Vacant / Filled) — only relevant for
                 // Complete Room listings, since Per Seat availability is
                 // already tracked via Available Seats.
                 if (bookingType == 'Room') ...[
@@ -816,6 +850,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                         child: GestureDetector(
                           onTap: () => setSheetState(() {
                             roomVacant = value;
+                            if (roomVacant) {
+                              syncAvailabilityDates(1);
+                            } else {
+                              availabilityDates.clear();
+                            }
                             errorText = null;
                           }),
                           child: Container(
@@ -855,6 +894,35 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
                     ),
                   ),
+                  // When a Complete Room is marked Vacant, ask when it's
+                  // actually free for a new tenant to move into — mirrors
+                  // the Per Seat "Availability Date" below, but as a single
+                  // date for the whole room.
+                  if (roomVacant) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Available From',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'When will this room be free for a new tenant to move in?',
+                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                    ),
+                    const SizedBox(height: 8),
+                    _datePickerField(
+                      context: context,
+                      label: 'Available From',
+                      date: availabilityDates.isNotEmpty ? availabilityDates.first : DateTime.now(),
+                      onPick: (picked) => setSheetState(() {
+                        if (availabilityDates.isEmpty) {
+                          availabilityDates.add(picked);
+                        } else {
+                          availabilityDates[0] = picked;
+                        }
+                      }),
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 16),
 
@@ -890,6 +958,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                           if (bookingType == 'Room' || currentAvailable > roomType) {
                             availableSeatsCtrl.text = roomType.toString();
                           }
+                          if (bookingType == 'Seat') {
+                            syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
+                          }
                           errorText = null;
                         }),
                         child: Container(
@@ -915,20 +986,25 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     },
                   ),
                 ),
-                // 4. Available Seats â€” only relevant for Per Seat listings.
+                // 4. Available Seats — only relevant for Per Seat listings.
                 // A Complete Room booking is priced/booked as one unit, so
                 // the room type (seater) alone is enough. 0 is a valid
-                // value here â€” it means every seat in the room is currently
+                // value here — it means every seat in the room is currently
                 // occupied, which the warden still needs to record.
                 if (bookingType == 'Seat') ...[
                   const SizedBox(height: 14),
                   _inputField(
                     controller: availableSeatsCtrl,
-                    label: 'Available Seats (0 â€“ $roomType)',
+                    label: 'Available Seats (0 – $roomType)',
                     hint: '0 if fully occupied, up to $roomType',
                     icon: Icons.people_outline,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (v) => setSheetState(() {
+                      errorText = null;
+                      final n = (int.tryParse(v) ?? 0).clamp(0, roomType);
+                      syncAvailabilityDates(n);
+                    }),
                     validator: (v) {
                       final n = int.tryParse(v ?? '');
                       if (n == null) return 'Required';
@@ -937,6 +1013,84 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       return null;
                     },
                   ),
+
+                  // When to tell tenants these seats can actually be moved
+                  // into — same date for every open seat, or a separate
+                  // date per seat (e.g. one tenant leaves this week,
+                  // another next month).
+                  if ((int.tryParse(availableSeatsCtrl.text) ?? 0) > 0) ...[
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Availability Date(s)',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'When will these seats be free for a new tenant to move in?',
+                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                    ),
+                    const SizedBox(height: 8),
+                    if (availabilityDates.length > 1) ...[
+                      Row(
+                        children: [
+                          (true, 'Same date for all'),
+                          (false, 'Set individually'),
+                        ].map((entry) {
+                          final (value, label) = entry;
+                          final selected = sameDateForAll == value;
+                          return Expanded(
+                            child: GestureDetector(
+                              onTap: () => setSheetState(() => sameDateForAll = value),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selected ? maroon : maroon.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: selected ? maroon : maroon.withValues(alpha: 0.25),
+                                  ),
+                                ),
+                                child: Text(
+                                  label,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: selected ? Colors.white : maroon,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (sameDateForAll || availabilityDates.length <= 1)
+                      _datePickerField(
+                        context: context,
+                        label: 'Available From',
+                        date: availabilityDates.first,
+                        onPick: (picked) => setSheetState(() {
+                          for (var i = 0; i < availabilityDates.length; i++) {
+                            availabilityDates[i] = picked;
+                          }
+                        }),
+                      )
+                    else
+                      ...List.generate(availabilityDates.length, (i) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _datePickerField(
+                            context: context,
+                            label: 'Seat ${i + 1} — Available From',
+                            date: availabilityDates[i],
+                            onPick: (picked) => setSheetState(() => availabilityDates[i] = picked),
+                          ),
+                        );
+                      }),
+                  ],
                 ],
                 const SizedBox(height: 14),
 
@@ -987,9 +1141,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     ),
                     onPressed: () {
                       // Complete Room bookings always use the full room type
-                      // as the "available seats" â€” there's nothing to ask.
+                      // as the "available seats" — there's nothing to ask.
                       // For Per Seat rooms, an empty field is treated as not
-                      // entered (still required) â€” 0 is a distinct, valid
+                      // entered (still required) — 0 is a distinct, valid
                       // value meaning "fully occupied".
                       final seatsText = availableSeatsCtrl.text.trim();
                       final parsedSeats = int.tryParse(seatsText);
@@ -1001,7 +1155,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                         setSheetState(() => errorText = 'Room number/name is required');
                         return;
                       }
-                      // Block duplicate room numbers â€” compared
+                      // Block duplicate room numbers — compared
                       // case-insensitively, and skipping the room currently
                       // being edited so re-saving it doesn't flag itself.
                       final isDuplicate = _rooms.asMap().entries.any((entry) =>
@@ -1035,6 +1189,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                         // Rent & advance are set later, in the Pricing step.
                         'price': existing?['price'] ?? 0,
                         'advance': existing?['advance'] ?? 0,
+                        // Meaningful for Per Seat rooms with at least one
+                        // seat currently marked available, or a Complete
+                        // Room that's currently Vacant.
+                        'availabilityDates':
+                        (bookingType == 'Seat' && available > 0) ||
+                            (bookingType == 'Room' && roomVacant)
+                            ? availabilityDates.map((d) => d.toIso8601String()).toList()
+                            : <String>[],
+                        'availabilitySameDate': sameDateForAll,
                       };
                       setState(() {
                         if (existingIndex != null) {
@@ -1082,7 +1245,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             content: Text(
               remaining > 0
                   ? 'Add $remaining more room${remaining == 1 ? '' : 's'} to match the total ($declared) entered in Step 1'
-                  : 'You\'ve added ${_rooms.length} rooms but Step 1 says $declared â€” remove ${-remaining} or update the total',
+                  : 'You\'ve added ${_rooms.length} rooms but Step 1 says $declared — remove ${-remaining} or update the total',
             ),
           ),
         );
@@ -1105,7 +1268,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   }
 }
 
-// â”€â”€ Room Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Room Card ─────────────────────────────────────────────────────────────────
 class _RoomCard extends StatelessWidget {
   final int index;
   final Map<String, dynamic> room;
@@ -1193,11 +1356,22 @@ class _RoomCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${room['roomType']} Seater â€¢ '
-                      '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat â€¢ ${room['availableSeats']}/${room['roomType']} available'} â€¢ '
+                  '${room['roomType']} Seater • '
+                      '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat • ${room['availableSeats']}/${room['roomType']} available'} • '
                       '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
                   style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
                 ),
+                if (((room['bookingType'] == 'Seat' &&
+                    (room['availableSeats'] as int) > 0) ||
+                    (room['bookingType'] == 'Room' &&
+                        room['vacant'] == true)) &&
+                    (room['availabilityDates'] as List?)?.isNotEmpty == true) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    _availabilitySummary(room),
+                    style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55), fontStyle: FontStyle.italic),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1215,7 +1389,7 @@ class _RoomCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Step Indicator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Step Indicator ────────────────────────────────────────────────────────────
 class _StepIndicator extends StatelessWidget {
   final int currentStep;
   static const maroon = Color(0xFF800020);
@@ -1284,7 +1458,7 @@ class _StepIndicator extends StatelessWidget {
   }
 }
 
-// â”€â”€ Bottom Buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Bottom Buttons ────────────────────────────────────────────────────────────
 class _BottomButtons extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -1355,7 +1529,57 @@ class _BottomButtons extends StatelessWidget {
   }
 }
 
-// â”€â”€ Shared Widgets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Shared Widgets ────────────────────────────────────────────────────────────
+String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
+
+String _availabilitySummary(Map<String, dynamic> room) {
+  final raw = (room['availabilityDates'] as List?) ?? const [];
+  if (raw.isEmpty) return '';
+  final dates = raw.map((s) => DateTime.parse(s as String)).toList();
+  final sameDateForAll = room['availabilitySameDate'] == true;
+  final allSame = dates.map((d) => '${d.year}-${d.month}-${d.day}').toSet().length == 1;
+  if (sameDateForAll || allSame) {
+    return 'Available from ${_formatDate(dates.first)}';
+  }
+  return 'Seats available on individual dates';
+}
+
+Widget _datePickerField({
+  required BuildContext context,
+  required String label,
+  required DateTime date,
+  required ValueChanged<DateTime> onPick,
+}) {
+  const maroon = Color(0xFF800020);
+  return GestureDetector(
+    onTap: () async {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: date,
+        firstDate: DateTime.now().subtract(const Duration(days: 1)),
+        lastDate: DateTime.now().add(const Duration(days: 365)),
+      );
+      if (picked != null) onPick(picked);
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: maroon.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: maroon.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_today_outlined, color: maroon, size: 18),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: maroon))),
+          Text(_formatDate(date), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: maroon)),
+        ],
+      ),
+    ),
+  );
+}
+
 Widget _sectionTitle(String title, Color fg) => Text(
   title,
   style: TextStyle(
@@ -1423,4 +1647,3 @@ Widget _inputField({
         ),
       ),
     );
-

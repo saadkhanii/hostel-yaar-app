@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import 'hostel_rooms_screen.dart';
 
 class ManageHostelsScreen extends StatefulWidget {
   const ManageHostelsScreen({super.key});
@@ -12,31 +13,139 @@ class ManageHostelsScreen extends StatefulWidget {
 class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   static const maroon = Color(0xFF800020);
 
-  // â”€â”€ Dummy data â€” replace with data fetched from Firestore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dummy data — replace with data fetched from Firestore ────────────
   final List<Map<String, dynamic>> _hostels = [
     {
       'name': 'Green View Hostel',
       'city': 'Gulberg, Lahore',
       'type': 'Boys',
-      'totalRooms': 18,
-      'vacantRooms': 4,
       'active': true,
+      'rooms': [
+        {
+          'number': '101',
+          'bookingType': 'Seat',
+          'roomType': 3,
+          'availableSeats': 0,
+          'attachedWashroom': true,
+          'vacant': false,
+          'price': 8000,
+          'advance': 8000,
+          'availabilityDates': <String>[],
+          'availabilitySameDate': true,
+          'upcomingVacancies': [
+            {'seats': 2, 'date': DateTime.now().add(const Duration(days: 5)).toIso8601String()},
+          ],
+        },
+        {
+          'number': '102',
+          'bookingType': 'Seat',
+          'roomType': 2,
+          'availableSeats': 1,
+          'attachedWashroom': false,
+          'vacant': false,
+          'price': 9000,
+          'advance': 9000,
+          'availabilityDates': [DateTime.now().toIso8601String()],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+        {
+          'number': '103',
+          'bookingType': 'Room',
+          'roomType': 1,
+          'availableSeats': 1,
+          'attachedWashroom': true,
+          'vacant': true,
+          'price': 15000,
+          'advance': 15000,
+          'availabilityDates': <String>[],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+        {
+          'number': '104',
+          'bookingType': 'Room',
+          'roomType': 2,
+          'availableSeats': 0,
+          'attachedWashroom': false,
+          'vacant': false,
+          'price': 18000,
+          'advance': 18000,
+          'availabilityDates': <String>[],
+          'availabilitySameDate': true,
+          'upcomingVacancies': [
+            {'seats': 2, 'date': DateTime.now().add(const Duration(days: 10)).toIso8601String()},
+          ],
+        },
+      ],
     },
     {
       'name': 'Sunrise Boys Hostel',
       'city': 'Model Town, Lahore',
       'type': 'Boys',
-      'totalRooms': 12,
-      'vacantRooms': 0,
       'active': true,
+      'rooms': [
+        {
+          'number': '201',
+          'bookingType': 'Seat',
+          'roomType': 4,
+          'availableSeats': 0,
+          'attachedWashroom': true,
+          'vacant': false,
+          'price': 7500,
+          'advance': 7500,
+          'availabilityDates': <String>[],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+        {
+          'number': '202',
+          'bookingType': 'Room',
+          'roomType': 2,
+          'availableSeats': 0,
+          'attachedWashroom': false,
+          'vacant': false,
+          'price': 16000,
+          'advance': 16000,
+          'availabilityDates': <String>[],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+      ],
     },
     {
       'name': 'Al-Noor Girls Hostel',
       'city': 'Johar Town, Lahore',
       'type': 'Girls',
-      'totalRooms': 18,
-      'vacantRooms': 6,
       'active': false,
+      'rooms': [
+        {
+          'number': '301',
+          'bookingType': 'Seat',
+          'roomType': 3,
+          'availableSeats': 3,
+          'attachedWashroom': true,
+          'vacant': true,
+          'price': 8500,
+          'advance': 8500,
+          'availabilityDates': [DateTime.now().toIso8601String()],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+        {
+          'number': '302',
+          'bookingType': 'Seat',
+          'roomType': 3,
+          'availableSeats': 3,
+          'attachedWashroom': true,
+          'vacant': true,
+          'price': 8500,
+          'advance': 8500,
+          'availabilityDates': [DateTime.now().toIso8601String()],
+          'availabilitySameDate': true,
+          'upcomingVacancies': <Map<String, dynamic>>[],
+        },
+      ],
     },
   ];
 
@@ -72,12 +181,43 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
     );
   }
 
-  void _editHostel(int index) {
-    // TODO: navigate to AddHostelScreen in edit mode once it supports
-    // pre-filling from an existing hostel.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Editing existing hostels is coming soon')),
+  // Opens the edit-hostel screen (registered in AppRouter) for this
+  // hostel's own details (name, type, location, facilities, contact,
+  // photos). Rooms aren't editable here — those stay on the dedicated
+  // HostelRoomsScreen via "Manage Rooms".
+  Future<void> _editHostel(int index) async {
+    final hostel = _hostels[index];
+    // Not typed as Navigator.pushNamed<Map<String, dynamic>> — the router's
+    // MaterialPageRoute is built without an explicit generic, so a typed
+    // pushNamed call would throw a runtime cast error. Cast after the fact
+    // instead.
+    final result = await Navigator.pushNamed(
+      context,
+      AppRoutes.editHostel,
+      arguments: hostel,
     );
+    if (result != null) {
+      setState(() => _hostels[index] = result as Map<String, dynamic>);
+    }
+  }
+
+  // Opens the full room-by-room management screen for a hostel and, once
+  // the warden backs out of it, writes any edited/added/removed rooms back
+  // onto this hostel so the summary stats here stay in sync.
+  Future<void> _openRoomManagement(int index) async {
+    final hostel = _hostels[index];
+    final updatedRooms = await Navigator.push<List<Map<String, dynamic>>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HostelRoomsScreen(
+          hostelName: hostel['name'] as String,
+          rooms: (hostel['rooms'] as List).cast<Map<String, dynamic>>(),
+        ),
+      ),
+    );
+    if (updatedRooms != null) {
+      setState(() => hostel['rooms'] = updatedRooms);
+    }
   }
 
   @override
@@ -96,7 +236,7 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'My Listed Hostels',
+          'Listed Hostels',
           style: TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -115,6 +255,7 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
               onToggleActive: (v) => setState(() => hostel['active'] = v),
               onEdit: () => _editHostel(i),
               onDelete: () => _confirmDelete(i),
+              onManageRooms: () => _openRoomManagement(i),
             );
           },
         ),
@@ -154,13 +295,14 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   }
 }
 
-// â”€â”€ Hostel Listing Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Hostel Listing Card ────────────────────────────────────────────────────
 class _HostelListingCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
   final bool isDark;
   final ValueChanged<bool> onToggleActive;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onManageRooms;
 
   const _HostelListingCard({
     required this.hostel,
@@ -168,6 +310,7 @@ class _HostelListingCard extends StatelessWidget {
     required this.onToggleActive,
     required this.onEdit,
     required this.onDelete,
+    required this.onManageRooms,
   });
 
   static const maroon = Color(0xFF800020);
@@ -176,10 +319,17 @@ class _HostelListingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool active = hostel['active'] as bool;
-    final int totalRooms = hostel['totalRooms'] as int;
-    final int vacantRooms = hostel['vacantRooms'] as int;
-    final int filledRooms = totalRooms - vacantRooms;
-    final double occupancyRatio = totalRooms == 0 ? 0 : filledRooms / totalRooms;
+    final rooms = (hostel['rooms'] as List).cast<Map<String, dynamic>>();
+    final int totalRoomsCount = rooms.length;
+    // Occupancy is tracked in seats rather than whole rooms, since a
+    // "Per Seat" room can be partially vacant.
+    final int totalSeats = rooms.fold<int>(0, (sum, r) => sum + (r['roomType'] as int));
+    final int vacantSeats = rooms.fold<int>(0, (sum, r) {
+      if (r['bookingType'] == 'Seat') return sum + (r['availableSeats'] as int);
+      return sum + (r['vacant'] == true ? (r['roomType'] as int) : 0);
+    });
+    final int filledSeats = totalSeats - vacantSeats;
+    final double occupancyRatio = totalSeats == 0 ? 0 : filledSeats / totalSeats;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -192,7 +342,7 @@ class _HostelListingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // â”€â”€ Top row: thumbnail, name/city, status toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Top row: thumbnail, name/city, status toggle ──────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -269,28 +419,28 @@ class _HostelListingCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // â”€â”€ Occupancy stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Occupancy stats ──────────────────────────────────────────
           Row(
             children: [
               Expanded(
                 child: _OccupancyStat(
-                  label: 'Total Rooms',
-                  value: '$totalRooms',
+                  label: 'Rooms',
+                  value: '$totalRoomsCount',
                   color: maroon,
                 ),
               ),
               Expanded(
                 child: _OccupancyStat(
-                  label: 'Filled',
-                  value: '$filledRooms',
+                  label: 'Filled Seats',
+                  value: '$filledSeats',
                   color: activeGreen,
                 ),
               ),
               Expanded(
                 child: _OccupancyStat(
-                  label: 'Vacant',
-                  value: '$vacantRooms',
-                  color: vacantRooms > 0 ? Colors.orange.shade800 : maroon.withValues(alpha: 0.4),
+                  label: 'Vacant Seats',
+                  value: '$vacantSeats',
+                  color: vacantSeats > 0 ? Colors.orange.shade800 : maroon.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -303,14 +453,34 @@ class _HostelListingCard extends StatelessWidget {
               minHeight: 6,
               backgroundColor: maroon.withValues(alpha: 0.12),
               valueColor: AlwaysStoppedAnimation(
-                vacantRooms == 0 ? activeGreen : maroon,
+                vacantSeats == 0 ? activeGreen : maroon,
               ),
             ),
           ),
 
           const SizedBox(height: 14),
 
-          // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Manage Rooms ──────────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onManageRooms,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: maroon,
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.meeting_room_outlined, size: 16, color: Colors.white),
+              label: const Text(
+                'Manage Rooms',
+                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ── Actions ───────────────────────────────────────────────────
           Row(
             children: [
               Expanded(
@@ -346,7 +516,7 @@ class _HostelListingCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Small occupancy stat block used inside the card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Small occupancy stat block used inside the card ─────────────────────────
 class _OccupancyStat extends StatelessWidget {
   final String label;
   final String value;
@@ -371,4 +541,3 @@ class _OccupancyStat extends StatelessWidget {
     );
   }
 }
-

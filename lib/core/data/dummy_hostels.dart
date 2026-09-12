@@ -13,7 +13,14 @@
 //   'phone', 'whatsapp', 'inAppChat',
 //   'rooms': List<Map<String, dynamic>>  // { number, bookingType, roomType,
 //                                         //   availableSeats, attachedWashroom,
-//                                         //   price, advance, vacant }
+//                                         //   price, advance, vacant,
+//                                         //   availabilityDates (ISO8601
+//                                         //   strings — one per available
+//                                         //   seat for a Per Seat room, or a
+//                                         //   single date for a vacant
+//                                         //   Complete Room; empty when
+//                                         //   nothing's available),
+//                                         //   availabilitySameDate }
 // }
 class DummyHostels {
   DummyHostels._();
@@ -33,8 +40,13 @@ class DummyHostels {
       'whatsapp': '+92 300 1234567',
       'inAppChat': true,
       'rooms': [
-        {'number': '101', 'bookingType': 'Room', 'roomType': 2, 'availableSeats': 2, 'attachedWashroom': true, 'price': 16000, 'advance': 16000, 'vacant': true},
-        {'number': '201', 'bookingType': 'Seat', 'roomType': 4, 'availableSeats': 2, 'attachedWashroom': true, 'price': 8000, 'advance': 8000, 'vacant': true},
+        {'number': '101', 'bookingType': 'Room', 'roomType': 2, 'availableSeats': 2, 'attachedWashroom': true, 'price': 16000, 'advance': 16000, 'vacant': true,
+          'availabilityDates': [DateTime.now().add(const Duration(days: 3)).toIso8601String()], 'availabilitySameDate': true},
+        {'number': '201', 'bookingType': 'Seat', 'roomType': 4, 'availableSeats': 2, 'attachedWashroom': true, 'price': 8000, 'advance': 8000, 'vacant': true,
+          'availabilityDates': [
+            DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+            DateTime.now().add(const Duration(days: 9)).toIso8601String(),
+          ], 'availabilitySameDate': false},
       ],
     },
     {
@@ -51,7 +63,8 @@ class DummyHostels {
       'whatsapp': '+92 300 2223344',
       'inAppChat': true,
       'rooms': [
-        {'number': '1', 'bookingType': 'Seat', 'roomType': 3, 'availableSeats': 0, 'attachedWashroom': false, 'price': 7500, 'advance': 7500, 'vacant': false},
+        {'number': '1', 'bookingType': 'Seat', 'roomType': 3, 'availableSeats': 0, 'attachedWashroom': false, 'price': 7500, 'advance': 7500, 'vacant': false,
+          'availabilityDates': <String>[], 'availabilitySameDate': true},
       ],
     },
     {
@@ -68,7 +81,8 @@ class DummyHostels {
       'whatsapp': '+92 300 3334455',
       'inAppChat': true,
       'rooms': [
-        {'number': '5', 'bookingType': 'Room', 'roomType': 1, 'availableSeats': 1, 'attachedWashroom': true, 'price': 9000, 'advance': 9000, 'vacant': true},
+        {'number': '5', 'bookingType': 'Room', 'roomType': 1, 'availableSeats': 1, 'attachedWashroom': true, 'price': 9000, 'advance': 9000, 'vacant': true,
+          'availabilityDates': [DateTime.now().add(const Duration(days: 1)).toIso8601String()], 'availabilitySameDate': true},
       ],
     },
     {
@@ -85,7 +99,8 @@ class DummyHostels {
       'whatsapp': '+92 300 4445566',
       'inAppChat': false,
       'rooms': [
-        {'number': '12', 'bookingType': 'Room', 'roomType': 3, 'availableSeats': 3, 'attachedWashroom': false, 'price': 11000, 'advance': 11000, 'vacant': true},
+        {'number': '12', 'bookingType': 'Room', 'roomType': 3, 'availableSeats': 3, 'attachedWashroom': false, 'price': 11000, 'advance': 11000, 'vacant': true,
+          'availabilityDates': [DateTime.now().toIso8601String()], 'availabilitySameDate': true},
       ],
     },
     {
@@ -102,7 +117,12 @@ class DummyHostels {
       'whatsapp': '+92 300 5556677',
       'inAppChat': true,
       'rooms': [
-        {'number': '4', 'bookingType': 'Seat', 'roomType': 6, 'availableSeats': 3, 'attachedWashroom': false, 'price': 6000, 'advance': 6000, 'vacant': true},
+        {'number': '4', 'bookingType': 'Seat', 'roomType': 6, 'availableSeats': 3, 'attachedWashroom': false, 'price': 6000, 'advance': 6000, 'vacant': true,
+          'availabilityDates': [
+            DateTime.now().toIso8601String(),
+            DateTime.now().toIso8601String(),
+            DateTime.now().toIso8601String(),
+          ], 'availabilitySameDate': true},
       ],
     },
     {
@@ -119,7 +139,8 @@ class DummyHostels {
       'whatsapp': '+92 300 6667788',
       'inAppChat': true,
       'rooms': [
-        {'number': '3', 'bookingType': 'Room', 'roomType': 2, 'availableSeats': 0, 'attachedWashroom': true, 'price': 13000, 'advance': 13000, 'vacant': false},
+        {'number': '3', 'bookingType': 'Room', 'roomType': 2, 'availableSeats': 0, 'attachedWashroom': true, 'price': 13000, 'advance': 13000, 'vacant': false,
+          'availabilityDates': <String>[], 'availabilitySameDate': true},
       ],
     },
   ];

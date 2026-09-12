@@ -49,7 +49,10 @@ class RoleSelectionScreen extends StatelessWidget {
                 subtitle: 'Looking for a hostel to stay in',
                 icon: Icons.person_search,
                 onTap: () {
-                  NavigationService.navigateTo(AppRoutes.seekerHome);
+                  NavigationService.navigateTo(
+                    AppRoutes.login,
+                    arguments: 'seeker',
+                  );
                 },
               ),
               const SizedBox(height: 20),
@@ -58,7 +61,10 @@ class RoleSelectionScreen extends StatelessWidget {
                 subtitle: 'I manage a hostel',
                 icon: Icons.home_work,
                 onTap: () {
-                  NavigationService.navigateTo(AppRoutes.wardenHome);
+                  NavigationService.navigateTo(
+                    AppRoutes.login,
+                    arguments: 'warden',
+                  );
                 },
               ),
             ],

@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 
-// â”€â”€ Warden Booking Requests Inbox â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Warden Booking Requests Inbox ──────────────────────────────────────────
 // Reached from the Warden Dashboard's "Requests" stat card. Shows booking
 // requests seekers send from HostelDetailScreen's "Send Request" action.
 //
-// Dummy data below is self-contained for now â€” swap `_requests` for a real
+// Dummy data below is self-contained for now — swap `_requests` for a real
 // Firestore-backed stream once HostelDetailScreen actually writes booking
 // requests (see the TODO in hostel_detail.dart's `_requestBooking`) instead
 // of only showing a snackbar.
@@ -22,7 +22,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
 
   _RequestFilter _filter = _RequestFilter.all;
 
-  // â”€â”€ Dummy data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Dummy data ─────────────────────────────────────────────────────────
   final List<Map<String, dynamic>> _requests = [
     {
       'seekerName': 'Ali Hassan',
@@ -33,6 +33,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       'roomType': 2,
       'price': 16000,
       'requestedAt': DateTime.now().subtract(const Duration(hours: 2)),
+      'moveInDate': DateTime.now().add(const Duration(days: 5)),
       'status': 'Pending',
     },
     {
@@ -44,6 +45,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       'roomType': 4,
       'price': 8000,
       'requestedAt': DateTime.now().subtract(const Duration(hours: 5)),
+      'moveInDate': DateTime.now().add(const Duration(days: 2)),
       'status': 'Pending',
     },
     {
@@ -55,6 +57,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       'roomType': 3,
       'price': 7500,
       'requestedAt': DateTime.now().subtract(const Duration(days: 1)),
+      'moveInDate': DateTime.now().add(const Duration(days: 10)),
       'status': 'Accepted',
     },
     {
@@ -66,6 +69,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       'roomType': 3,
       'price': 7500,
       'requestedAt': DateTime.now().subtract(const Duration(days: 2)),
+      'moveInDate': DateTime.now().add(const Duration(days: 3)),
       'status': 'Rejected',
     },
     {
@@ -77,6 +81,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       'roomType': 1,
       'price': 9000,
       'requestedAt': DateTime.now().subtract(const Duration(minutes: 40)),
+      'moveInDate': DateTime.now().add(const Duration(days: 1)),
       'status': 'Pending',
     },
   ];
@@ -103,6 +108,14 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
     if (diff.inDays == 1) return 'Yesterday';
     return '${diff.inDays}d ago';
   }
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  // Formats the seeker's requested move-in date, e.g. "15 Sep 2026".
+  String _formatMoveInDate(DateTime dt) => '${dt.day} ${_months[dt.month - 1]} ${dt.year}';
 
   void _accept(Map<String, dynamic> request) {
     setState(() => request['status'] = 'Accepted');
@@ -168,7 +181,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // â”€â”€ Filter chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // ── Filter chips ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
               child: SizedBox(
@@ -222,6 +235,9 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
                   return _RequestCard(
                     request: request,
                     timeAgo: _timeAgo(request['requestedAt'] as DateTime),
+                    moveInDate: (request['moveInDate'] as DateTime?) != null
+                        ? _formatMoveInDate(request['moveInDate'] as DateTime)
+                        : null,
                     onAccept: () => _accept(request),
                     onReject: () => _reject(request),
                   );
@@ -261,16 +277,18 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
   }
 }
 
-// â”€â”€ Request Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Request Card ────────────────────────────────────────────────────────────
 class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final String timeAgo;
+  final String? moveInDate;
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
   const _RequestCard({
     required this.request,
     required this.timeAgo,
+    required this.moveInDate,
     required this.onAccept,
     required this.onReject,
   });
@@ -306,7 +324,7 @@ class _RequestCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // â”€â”€ Top row: seeker + status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Top row: seeker + status badge ────────────────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -350,14 +368,14 @@ class _RequestCard extends StatelessWidget {
           Divider(height: 1, color: maroon.withValues(alpha: 0.12)),
           const SizedBox(height: 12),
 
-          // â”€â”€ Booking details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+          // ── Booking details ────────────────────────────────────────
           Row(
             children: [
               Icon(Icons.home_work_outlined, size: 14, color: maroon.withValues(alpha: 0.6)),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  '${request['hostelName']} â€¢ Room ${request['roomNumber']}',
+                  '${request['hostelName']} • Room ${request['roomNumber']}',
                   style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.75)),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -370,18 +388,32 @@ class _RequestCard extends StatelessWidget {
               Icon(Icons.bed_outlined, size: 14, color: maroon.withValues(alpha: 0.6)),
               const SizedBox(width: 6),
               Text(
-                '${request['roomType']} Seater â€¢ ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'}',
+                '${request['roomType']} Seater • ${bookingType == 'Room' ? 'Complete Room' : 'Per Seat'}',
                 style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.75)),
               ),
             ],
           ),
+          const SizedBox(height: 6),
+          if (moveInDate != null) ...[
+            Row(
+              children: [
+                Icon(Icons.event_outlined, size: 14, color: maroon.withValues(alpha: 0.6)),
+                const SizedBox(width: 6),
+                Text(
+                  'Wants to move in: $moveInDate',
+                  style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.75)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
           const SizedBox(height: 10),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Rs. ${request['price']} / ${bookingType == 'Room' ? 'room' : 'seat'} / month',
+                'PKR ${request['price']} / ${bookingType == 'Room' ? 'room' : 'seat'} / month',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: maroon),
               ),
               Text(

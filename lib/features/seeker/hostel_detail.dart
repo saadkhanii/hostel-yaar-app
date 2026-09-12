@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 
-// â”€â”€ Hostel Detail Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Hostel Detail Screen ───────────────────────────────────────────────────
 // Shown when a seeker taps a hostel card/tile on the dashboard. Takes a
 // loose `Map<String, dynamic>` for now (matching the shape used across the
-// other screens) â€” swap this for a shared `Hostel`/`Room` model once one
+// other screens) — swap this for a shared `Hostel`/`Room` model once one
 // exists, at which point `hostel` becomes a typed object instead of a map.
 //
 // Expected shape of `hostel`:
@@ -82,6 +82,14 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   final PageController _photoController = PageController();
   int _currentPhoto = 0;
 
+  // Tracks which rooms already have a pending request from this seeker in
+  // this session, so the button can flip to "Requested" and can't be
+  // re-tapped. Keyed by room number (unique within a hostel's room list).
+  // TODO: back this with the real booking-request record (Firestore) once
+  // that flow exists, so it persists across sessions/devices instead of
+  // resetting whenever this screen is rebuilt.
+  final Set<String> _requestedRooms = {};
+
   static const Map<String, IconData> _facilityIcons = {
     'WiFi': Icons.wifi,
     'Meals': Icons.restaurant_outlined,
@@ -116,42 +124,107 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   int get _availableRoomCount => _rooms.where(_isRoomAvailable).length;
 
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+
   void _requestBooking(Map<String, dynamic> room) {
+    DateTime? moveInDate;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1D2128)
-            : const Color(0xFFF3E6D5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Request to Book',
-          style: TextStyle(color: maroon, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          'Send a booking request for Room ${room['number']} at '
-              '${widget.hostel['name']}? The warden will confirm availability '
-              'before you pay any advance.',
-          style: TextStyle(color: maroon.withValues(alpha: 0.75)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF1D2128)
+              : const Color(0xFFF3E6D5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Request to Book',
+            style: TextStyle(color: maroon, fontWeight: FontWeight.bold),
           ),
-          TextButton(
-            onPressed: () {
-              // TODO: create a real booking-request record (Firestore) once
-              // the request/approval flow exists â€” this only confirms UI intent.
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Request sent for Room ${room['number']}')),
-              );
-            },
-            style: TextButton.styleFrom(foregroundColor: maroon),
-            child: const Text('Send Request', style: TextStyle(fontWeight: FontWeight.w600)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Send a booking request for Room ${room['number']} at '
+                    '${widget.hostel['name']}? The warden will confirm availability '
+                    'before you pay any advance.',
+                style: TextStyle(color: maroon.withValues(alpha: 0.75)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'When do you want to move in?',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: moveInDate ?? DateTime.now().add(const Duration(days: 1)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => moveInDate = picked);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: maroon.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: maroon.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today_outlined, color: maroon, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          moveInDate == null ? 'Select a date' : _formatDate(moveInDate!),
+                          style: const TextStyle(fontSize: 13, color: maroon, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+            ),
+            TextButton(
+              onPressed: moveInDate == null
+                  ? null
+                  : () {
+                // TODO: create a real booking-request record (Firestore) once
+                // the request/approval flow exists — this only confirms UI
+                // intent and remembers it locally so the button can't be
+                // re-tapped.
+                setState(() => _requestedRooms.add(room['number'] as String));
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Request sent for Room ${room['number']} — move-in ${_formatDate(moveInDate!)}',
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: maroon),
+              child: const Text('Send Request', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -160,7 +233,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     // TODO: wire to url_launcher (tel:/https://wa.me/) and in-app chat once
     // those integrations exist.
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label â€” coming soon')),
+      SnackBar(content: Text('$label — coming soon')),
     );
   }
 
@@ -229,6 +302,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                               child: _DetailRoomCard(
                                 room: room,
                                 available: _isRoomAvailable(room),
+                                requested: _requestedRooms.contains(room['number']),
                                 onRequest: () => _requestBooking(room),
                               ),
                             ),
@@ -377,7 +451,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           Expanded(
             child: _quickStat(
               icon: Icons.payments_outlined,
-              value: starting != null ? 'Rs. $starting' : 'â€”',
+              value: starting != null ? 'Rs. $starting' : '—',
               label: 'Starting from',
             ),
           ),
@@ -522,15 +596,17 @@ Widget _sectionTitle(String title, Color fg) => Text(
   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg),
 );
 
-// â”€â”€ Room Card (seeker-facing, read-only + request action) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Room Card (seeker-facing, read-only + request action) ─────────────────
 class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
+  final bool requested;
   final VoidCallback onRequest;
 
   const _DetailRoomCard({
     required this.room,
     required this.available,
+    required this.requested,
     required this.onRequest,
   });
 
@@ -582,8 +658,8 @@ class _DetailRoomCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${room['roomType']} Seater â€¢ '
-                '${isSeatRoom ? 'Per Seat' : 'Complete Room'} â€¢ '
+            '${room['roomType']} Seater • '
+                '${isSeatRoom ? 'Per Seat' : 'Complete Room'} • '
                 '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
             style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
           ),
@@ -606,16 +682,31 @@ class _DetailRoomCard extends StatelessWidget {
                 ),
               ),
               ElevatedButton(
-                onPressed: available ? onRequest : null,
+                onPressed: (available && !requested) ? onRequest : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: maroon,
-                  disabledBackgroundColor: maroon.withValues(alpha: 0.25),
+                  backgroundColor: requested ? Colors.green.withValues(alpha: 0.15) : maroon,
+                  disabledBackgroundColor: requested
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : maroon.withValues(alpha: 0.25),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(
-                  available ? 'Request to Book' : 'Unavailable',
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (requested) ...[
+                      Icon(Icons.check_circle, size: 14, color: Colors.green[800]),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      requested ? 'Requested' : (available ? 'Request to Book' : 'Unavailable'),
+                      style: TextStyle(
+                        color: requested ? Colors.green[800] : Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
