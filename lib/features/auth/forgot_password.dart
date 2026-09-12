@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
-import 'authTextFiield.dart';
+import 'auth_text_field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});

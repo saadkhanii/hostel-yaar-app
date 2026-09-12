@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:hostel_yaar/features/splash/splash_screen.dart';
 import 'package:hostel_yaar/features/splash/role_selection.dart';
 import 'package:hostel_yaar/features/auth/login.dart';
 import 'package:hostel_yaar/features/auth/signup.dart';
-import 'package:hostel_yaar/features/auth/forgotPassword.dart';
+import 'package:hostel_yaar/features/auth/forgot_password.dart';
 import 'package:hostel_yaar/features/auth/otp.dart';
 
 import '../../features/seeker/seeker_dashboard.dart';
