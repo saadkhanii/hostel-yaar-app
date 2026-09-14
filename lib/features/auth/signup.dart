@@ -2,6 +2,7 @@
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/auth_service.dart';
 import 'auth_text_field.dart';
 
 enum _SignupRole { seeker, warden }
@@ -15,6 +16,7 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -39,16 +41,40 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: hook up real account-creation call here, passing _selectedRole.
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final roleString = _selectedRole == _SignupRole.seeker ? 'seeker' : 'warden';
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      final userData = await _authService.signup(
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        role: roleString,
+      );
 
-    final destination = _selectedRole == _SignupRole.seeker
-        ? AppRoutes.seekerHome
-        : AppRoutes.wardenHome;
-    NavigationService.navigateTo(destination);
+      print('=== SIGNUP SUCCESS ===');
+      print('Response: $userData');
+      print('Role returned: ${userData['role']}');
+      print('======================');
+
+      if (!mounted) return;
+
+      final String role = userData['role'] as String? ?? roleString;
+      final destination =
+      role == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
+
+      NavigationService.navigateAndRemoveUntil(destination);
+    } on Exception catch (e) {
+      print('=== SIGNUP FAILED ===');
+      print(e);
+      print('=====================');
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

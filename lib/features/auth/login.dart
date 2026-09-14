@@ -2,12 +2,13 @@
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/auth_service.dart';
 import 'auth_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   /// The role chosen on the role-selection screen ('seeker' or 'warden').
-  /// Determines which dashboard the user lands on after logging in.
-  /// Defaults to 'seeker' if not provided (e.g. deep link straight to /login).
+  /// This is now just a UI hint — the real role is returned by the backend
+  /// after login, since it's the source of truth.
   final String? role;
 
   const LoginScreen({super.key, this.role});
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -36,15 +38,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: hook up real authentication call here.
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final userData = await _authService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      print('=== LOGIN SUCCESS ===');
+      print('Full response: $userData');
+      print('Role value: "${userData['role']}"');
+      print('Role type: ${userData['role'].runtimeType}');
+      print('=====================');
 
-    final destination =
-    widget.role == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
-    NavigationService.navigateAndRemoveUntil(destination);
+      if (!mounted) return;
+
+      final String role = userData['role'] as String? ?? 'seeker';
+      final destination =
+      role == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
+
+      print('Navigating to: $destination');
+
+      NavigationService.navigateAndRemoveUntil(destination);
+    } catch (e, stackTrace) {
+      print('=== LOGIN CAUGHT EXCEPTION ===');
+      print('Exception: $e');
+      print('Type: ${e.runtimeType}');
+      print('Stack trace: $stackTrace');
+      print('==============================');
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -81,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 140,
                         fit: BoxFit.contain,
                       ),
-                      const SizedBox(height: 04),
+                      const SizedBox(height: 4),
                       Text(
                         'Welcome Back',
                         style: TextStyle(
@@ -189,22 +219,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation(
-                          Color(0xFFF3E6D5),
-                        ),
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation(
+                                Color(0xFFF3E6D5),
+                              ),
+                            ),
+                          )
                         : const Text(
-                      'Log In',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                            'Log In',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 28),

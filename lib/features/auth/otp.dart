@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/auth_service.dart';
 
 class OtpScreen extends StatefulWidget {
   /// The email the code was sent to, shown to the user and passed along
@@ -25,6 +26,7 @@ class _OtpScreenState extends State<OtpScreen> {
   List.generate(_codeLength, (_) => TextEditingController());
   final List<FocusNode> _focusNodes =
   List.generate(_codeLength, (_) => FocusNode());
+  final _authService = AuthService();
 
   bool _isVerifying = false;
   bool _isResending = false;
@@ -91,19 +93,28 @@ class _OtpScreenState extends State<OtpScreen> {
       _errorText = null;
     });
 
-    // TODO: hook up real OTP verification API call here, passing widget.email
-    // and _code.
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      await _authService.verifyOtp(widget.email, _code);
 
-    if (!mounted) return;
-    setState(() => _isVerifying = false);
+      if (!mounted) return;
 
-    // TODO: replace with navigation to a "set new password" screen once
-    // that flow exists; for now confirm and send the user back to Login.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code verified! You can now log in.')),
-    );
-    NavigationService.navigateTo(AppRoutes.login);
+      // OTP is valid — push the ResetPasswordScreen with the email + code
+      // so the next screen can submit them along with the new password.
+      NavigationService.navigateTo(
+        AppRoutes.resetPassword,
+        arguments: {
+          'email': widget.email,
+          'code': _code,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorText = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _isVerifying = false);
+    }
   }
 
   Future<void> _handleResend() async {
@@ -111,21 +122,30 @@ class _OtpScreenState extends State<OtpScreen> {
 
     setState(() => _isResending = true);
 
-    // TODO: hook up real "resend code" API call here, passing widget.email.
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      await _authService.forgotPassword(widget.email);
 
-    if (!mounted) return;
-    setState(() => _isResending = false);
+      if (!mounted) return;
 
-    for (final c in _controllers) {
-      c.clear();
+      for (final c in _controllers) {
+        c.clear();
+      }
+      _focusNodes.first.requestFocus();
+      _startResendTimer();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('A new code has been sent')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isResending = false);
     }
-    _focusNodes.first.requestFocus();
-    _startResendTimer();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('A new code has been sent')),
-    );
   }
 
   @override

@@ -2,6 +2,7 @@
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/auth_service.dart';
 import 'auth_text_field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _authService = AuthService();
 
   bool _isLoading = false;
 
@@ -28,16 +30,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
 
-    // TODO: hook up real "send reset code" API call here.
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final email = _emailController.text.trim();
+      await _authService.forgotPassword(email);
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      if (!mounted) return;
 
-    NavigationService.navigateTo(
-      AppRoutes.otp,
-      arguments: _emailController.text.trim(),
-    );
+      // Pass both email and a flag indicating this is a reset flow
+      // (vs. a signup-verification flow — see OtpScreen docs).
+      NavigationService.navigateTo(AppRoutes.otp, arguments: email);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -72,11 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     color: maroon.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.lock_reset,
-                    color: maroon,
-                    size: 34,
-                  ),
+                  child: const Icon(Icons.lock_reset, color: maroon, size: 34),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -131,22 +136,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation(
-                          Color(0xFFF3E6D5),
-                        ),
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation(
+                                Color(0xFFF3E6D5),
+                              ),
+                            ),
+                          )
                         : const Text(
-                      'Send Reset Code',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                            'Send Reset Code',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 28),

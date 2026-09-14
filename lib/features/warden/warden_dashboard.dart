@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/session_manager.dart';
 
 class WardenDashboard extends StatelessWidget {
   const WardenDashboard({super.key});
@@ -44,10 +45,14 @@ class WardenDashboard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: maroon.withValues(alpha: 0.15),
-                    child: const Icon(Icons.person, color: maroon, size: 26),
+
+                  GestureDetector(
+                    onTap: () => SessionManager.confirmAndLogout(context),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: maroon.withValues(alpha: 0.15),
+                      child: const Icon(Icons.person, color: maroon, size: 26),
+                    ),
                   ),
                 ],
               ),
@@ -169,13 +174,13 @@ class WardenDashboard extends StatelessWidget {
               break;
             case 2:
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Alerts â€” coming soon')),
+                const SnackBar(content: Text('Alerts — coming soon')),
               );
               break;
             case 3:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings â€” coming soon')),
-              );
+            // Settings is a stub — until it exists, treat this tab as
+            // the logout entry point.
+              SessionManager.confirmAndLogout(context);
               break;
           }
         },

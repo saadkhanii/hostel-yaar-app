@@ -5,6 +5,7 @@ import 'package:hostel_yaar/features/auth/login.dart';
 import 'package:hostel_yaar/features/auth/signup.dart';
 import 'package:hostel_yaar/features/auth/forgot_password.dart';
 import 'package:hostel_yaar/features/auth/otp.dart';
+import 'package:hostel_yaar/features/auth/reset_password.dart'; // ← NEW
 
 import '../../features/seeker/seeker_dashboard.dart';
 import '../../features/seeker/hostel_list.dart';
@@ -16,11 +17,6 @@ import '../../features/warden/edit_hostel_screen.dart';
 import '../../features/warden/warden_requests.dart';
 import '../../features/seeker/saved_hostels_screen.dart';
 import 'app_routes.dart';
-
-// Import your screens here as you create them
-// import 'package:hostel_yaar/features/auth/seeker_signup_screen.dart';
-// import 'package:hostel_yaar/features/auth/warden_signup_screen.dart';
-// import 'package:hostel_yaar/features/home/home_screen.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -49,14 +45,28 @@ class AppRouter {
         final email = settings.arguments as String?;
         return MaterialPageRoute(builder: (_) => OtpScreen(email: email ?? ''));
 
+      // ← NEW: reset password (receives { email, code } map from OtpScreen)
+      case AppRoutes.resetPassword:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return MaterialPageRoute(
+          builder: (_) => ResetPasswordScreen(
+            email: args['email'] as String? ?? '',
+            code: args['code'] as String? ?? '',
+          ),
+        );
+
       case AppRoutes.hostelList:
         final query = settings.arguments as String?;
-        return MaterialPageRoute(builder: (_) => HostelListScreen(initialQuery: query));
+        return MaterialPageRoute(
+          builder: (_) => HostelListScreen(initialQuery: query),
+        );
 
       case AppRoutes.hostelDetail:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => HostelDetailScreen(hostel: args ?? HostelDetailScreen.sampleHostel),
+          builder: (_) => HostelDetailScreen(
+            hostel: args ?? HostelDetailScreen.sampleHostel,
+          ),
         );
 
       case AppRoutes.addHostel:
@@ -68,7 +78,8 @@ class AppRouter {
       case AppRoutes.editHostel:
         final hostel = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => EditHostelScreen(hostel: hostel ?? const <String, dynamic>{}),
+          builder: (_) =>
+              EditHostelScreen(hostel: hostel ?? const <String, dynamic>{}),
         );
 
       case AppRoutes.wardenRequests:
@@ -76,22 +87,11 @@ class AppRouter {
 
       case AppRoutes.savedHostels:
         return MaterialPageRoute(builder: (_) => const SavedHostelsScreen());
-    // Add your routes here as you create screens
-    // case AppRoutes.seekerSignup:
-    //   return MaterialPageRoute(builder: (_) => const SeekerSignupScreen());
-
-    // case AppRoutes.wardenSignup:
-    //   return MaterialPageRoute(builder: (_) => const WardenSignupScreen());
-
-    // case AppRoutes.home:
-    //   return MaterialPageRoute(builder: (_) => const HomeScreen());
 
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(
-              child: Text('No route defined for ${settings.name}'),
-            ),
+            body: Center(child: Text('No route defined for ${settings.name}')),
           ),
         );
     }

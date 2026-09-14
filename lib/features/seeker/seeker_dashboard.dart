@@ -2,6 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/data/dummy_hostels.dart';
+import '../../core/services/session_manager.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   // Routed through AppRouter/AppRoutes.hostelDetail like every other screen
@@ -41,9 +42,9 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         NavigationService.navigateTo(AppRoutes.savedHostels);
         break;
       case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile â€” coming soon')),
-        );
+      // Replace the placeholder with a profile screen later; for now,
+      // this tab doubles as the logout entry point.
+        SessionManager.confirmAndLogout(context);
         break;
     }
   }
@@ -87,10 +88,13 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                       ),
                     ],
                   ),
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: maroon.withValues(alpha: 0.15),
-                    child: const Icon(Icons.person, color: maroon, size: 26),
+                  GestureDetector(
+                    onTap: () => SessionManager.confirmAndLogout(context),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: maroon.withValues(alpha: 0.15),
+                      child: const Icon(Icons.person, color: maroon, size: 26),
+                    ),
                   ),
                 ],
               ),
