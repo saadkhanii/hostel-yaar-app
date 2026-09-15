@@ -9,15 +9,11 @@ class HostelService {
   // Hostels
   // ─────────────────────────────────────────────────────────────────
 
-  /// Create a hostel (with rooms) for the logged-in warden.
-  /// The Flutter wizard collects rooms in a `List<Map<String, dynamic>>`
-  /// using camelCase keys — this method translates them to the backend's
-  /// snake_case before sending.
   Future<Map<String, dynamic>> createHostel({
     required String name,
     required String city,
     required String address,
-    required String type, // 'Boys' | 'Girls' | 'Mixed'
+    required String type,
     required List<String> facilities,
     required List<String> photos,
     required String phone,
@@ -42,17 +38,16 @@ class HostelService {
         'whatsapp': whatsapp,
         'in_app_chat': inAppChat,
         'active': active,
-        'rooms': rooms.map(_roomToJson).toList(),
+        'rooms': rooms.map((r) => _roomToBackend(r)).toList(),
       };
 
       final response = await _dio.post('/hostels', data: body);
-      return response.data as Map<String, dynamic>;
+      return _hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  /// List all active hostels (public). Optional filters.
   Future<List<Map<String, dynamic>>> listHostels({
     String? city,
     String? type,
@@ -67,33 +62,34 @@ class HostelService {
           if (q != null && q.isNotEmpty) 'q': q,
         },
       );
-      return (response.data as List).cast<Map<String, dynamic>>();
+      return (response.data as List)
+          .map((h) => _hostelFromBackend(h as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  /// Get a single hostel with its rooms.
   Future<Map<String, dynamic>> getHostel(String hostelId) async {
     try {
       final response = await _dio.get('/hostels/$hostelId');
-      return response.data as Map<String, dynamic>;
+      return _hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  /// The logged-in warden's own hostels (includes inactive).
   Future<List<Map<String, dynamic>>> listMyHostels() async {
     try {
       final response = await _dio.get('/hostels/mine');
-      return (response.data as List).cast<Map<String, dynamic>>();
+      return (response.data as List)
+          .map((h) => _hostelFromBackend(h as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  /// Update a hostel. Only the fields you pass are changed.
   Future<Map<String, dynamic>> updateHostel(
       String hostelId, {
         String? name,
@@ -122,13 +118,12 @@ class HostelService {
       };
 
       final response = await _dio.put('/hostels/$hostelId', data: body);
-      return response.data as Map<String, dynamic>;
+      return _hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
-  /// Delete a hostel (its rooms cascade-delete).
   Future<void> deleteHostel(String hostelId) async {
     try {
       await _dio.delete('/hostels/$hostelId');
@@ -148,9 +143,9 @@ class HostelService {
     try {
       final response = await _dio.post(
         '/hostels/$hostelId/rooms',
-        data: _roomToJson(room),
+        data: _roomToBackend(room),
       );
-      return response.data as Map<String, dynamic>;
+      return _roomFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -164,9 +159,9 @@ class HostelService {
     try {
       final response = await _dio.put(
         '/hostels/$hostelId/rooms/$roomId',
-        data: _roomToJson(updates, partial: true),
+        data: _roomToBackend(updates, partial: true),
       );
-      return response.data as Map<String, dynamic>;
+      return _roomFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -181,46 +176,110 @@ class HostelService {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // Internals
+  // Translation: backend (snake_case) <-> Flutter (camelCase)
   // ─────────────────────────────────────────────────────────────────
 
-  /// Convert a Flutter room map (camelCase) into the backend's
-  /// snake_case JSON shape.
+  /// Convert a Flutter-shaped room map into the backend's snake_case JSON.
   ///
   /// When [partial] is true (for updates), only keys actually present in
-  /// the input map are included — this lets `PUT` be a true partial
-  /// update rather than overwriting everything with nulls.
-  Map<String, dynamic> _roomToJson(
+  /// the input map are included — this lets PUT be a true partial update.
+  Map<String, dynamic> _roomToBackend(
       Map<String, dynamic> room, {
         bool partial = false,
       }) {
     final out = <String, dynamic>{};
 
-    void put(String dartKey, String jsonKey) {
+    void copy(String dartKey, String jsonKey) {
       if (room.containsKey(dartKey)) {
         out[jsonKey] = room[dartKey];
       } else if (!partial) {
-        // For full creates, always include the key so Pydantic picks up
-        // its defaults rather than complaining about a missing field.
-        // (Actually Pydantic defaults make this optional, but being
-        // explicit avoids surprises.)
+        // For full creates, pass through null so Pydantic uses defaults.
+        // (Pydantic's Field(default=...) applies when the key is absent;
+        // sending null where a value is required would fail validation.)
       }
     }
 
-    put('number', 'number');
-    put('bookingType', 'booking_type');
-    put('roomType', 'room_type');
-    put('availableSeats', 'available_seats');
-    put('attachedWashroom', 'attached_washroom');
-    put('price', 'price');
-    put('advance', 'advance');
-    put('vacant', 'vacant');
-    put('availabilityDates', 'availability_dates');
+    copy('number', 'number');
+    copy('bookingType', 'booking_type');
+    copy('roomType', 'room_type');
+    copy('availableSeats', 'available_seats');
+    copy('attachedWashroom', 'attached_washroom');
+    copy('price', 'price');
+    copy('advance', 'advance');
+    copy('vacant', 'vacant');
+    copy('availabilityDates', 'availability_dates');
 
+    // Carried-over keys that don't exist on the backend are silently dropped.
     return out;
   }
 
-  /// Pull a readable message out of a DioException.
+  /// Convert a backend hostel JSON object into the Flutter shape.
+  ///
+  /// The Flutter side keeps using camelCase everywhere, but the backend
+  /// speaks snake_case — this normalizes so existing screens don't need
+  /// to know about the backend's naming.
+  Map<String, dynamic> _hostelFromBackend(Map<String, dynamic> raw) {
+    final facilitiesList = (raw['facilities'] as List?)?.cast<String>() ?? [];
+    final rawRooms = (raw['rooms'] as List?) ?? const [];
+
+    return {
+      'id': raw['id'],
+      'wardenId': raw['warden_id'],
+      'name': raw['name'],
+      'city': raw['city'],
+      'address': raw['address'],
+      'type': raw['type'],
+      'latitude': raw['latitude'],
+      'longitude': raw['longitude'],
+      'facilities': {
+        for (final f in facilitiesList) f: true,
+      },
+      'photos': (raw['photos'] as List?)?.cast<String>() ?? const [],
+      'phone': raw['phone'],
+      'whatsapp': raw['whatsapp'],
+      'inAppChat': raw['in_app_chat'] ?? true,
+      'active': raw['active'] ?? true,
+      'startingPrice': raw['starting_price'] ?? 0,
+      'hasVacancy': raw['has_vacancy'] ?? false,
+      'roomCount': raw['room_count'] ?? 0,
+      'createdAt': raw['created_at'],
+      'updatedAt': raw['updated_at'],
+      'rooms': rawRooms
+          .map((r) => _roomFromBackend(r as Map<String, dynamic>))
+          .toList(),
+      // Placeholder until reviews exist.
+      'reviewCount': 0,
+      'rating': 0.0,
+    };
+  }
+
+  /// Convert a backend room JSON object into the Flutter shape used by
+  /// HostelRoomsScreen, HostelDetailScreen, and the Add Hostel wizard.
+  Map<String, dynamic> _roomFromBackend(Map<String, dynamic> raw) {
+    return {
+      'id': raw['id'],
+      'hostelId': raw['hostel_id'],
+      'number': raw['number'],
+      'bookingType': raw['booking_type'],
+      'roomType': raw['room_type'],
+      'availableSeats': raw['available_seats'],
+      'attachedWashroom': raw['attached_washroom'],
+      'price': raw['price'],
+      'advance': raw['advance'],
+      'vacant': raw['vacant'],
+      'availabilityDates': (raw['availability_dates'] as List?) ?? const [],
+      'availabilitySameDate':
+      _sameDate((raw['availability_dates'] as List?) ?? const []),
+      'upcomingVacancies': <Map<String, dynamic>>[],
+    };
+  }
+
+  bool _sameDate(List<dynamic> dates) {
+    if (dates.length <= 1) return true;
+    final first = dates.first;
+    return dates.every((d) => d == first);
+  }
+
   String _errorMessage(DioException e) {
     if (e.response?.data is Map && e.response!.data['detail'] != null) {
       return e.response!.data['detail'].toString();
