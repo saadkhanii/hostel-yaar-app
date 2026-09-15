@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/services/hostel_service.dart';
+
 class AddHostelScreen extends StatefulWidget {
   const AddHostelScreen({super.key});
 
@@ -12,6 +14,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   static const maroon = Color(0xFF800020);
 
   final _formKey = GlobalKey<FormState>();
+  final _hostelService = HostelService();
   int _currentStep = 0;
 
   // ── Basic Info ─────────────────────────────────────────────
@@ -24,12 +27,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   // ── Rooms ──────────────────────────────────────────────────
   final List<Map<String, dynamic>> _rooms = [];
 
-  // Parses the "Total rooms in hostel" field from Step 1. Used to gate
-  // Step 2 so a warden can't move on with fewer rooms entered than the
-  // hostel actually has.
   int? get _declaredTotalRooms => int.tryParse(_totalRoomsCtrl.text.trim());
-
-  // ── Pricing (rent & advance security are both set per-room) ──────────
 
   // ── Facilities ─────────────────────────────────────────────
   final Map<String, bool> _facilities = {
@@ -50,7 +48,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   bool _inAppChat = true;
 
   // ── Photos ─────────────────────────────────────────────────
-  final List<String> _photos = []; // will hold file paths
+  final List<String> _photos = [];
+
+  // ── Submission state ───────────────────────────────────────
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -90,24 +91,23 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
       ),
       body: Column(
         children: [
-          // ── Step Indicator ───────────────────────────────────
           _StepIndicator(currentStep: _currentStep),
-
-          // ── Form ─────────────────────────────────────────────
           Expanded(
             child: Form(
               key: _formKey,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: _buildCurrentStep(isDark, fg),
               ),
             ),
           ),
-
-          // ── Bottom Buttons ────────────────────────────────────
           _BottomButtons(
             currentStep: _currentStep,
             totalSteps: 5,
+            isSubmitting: _isSubmitting,
             onBack: () => setState(() => _currentStep--),
             onNext: _handleNext,
             onSubmit: _handleSubmit,
@@ -229,13 +229,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 16),
-
-        // Availability summary — lets the warden see at a glance how many
-        // Complete Rooms are vacant vs. filled, and how many individual
-        // seats are open across Per Seat rooms.
         if (_rooms.isNotEmpty) _buildAvailabilitySummary(fg),
-
-        // Existing rooms
         ..._rooms.asMap().entries.map((entry) {
           final i = entry.key;
           final room = entry.value;
@@ -246,8 +240,6 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             onEdit: () => _showAddRoomSheet(existingIndex: i),
           );
         }),
-
-        // Add room button
         GestureDetector(
           onTap: () => _showAddRoomSheet(),
           child: Container(
@@ -263,7 +255,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ),
             child: Column(
               children: [
-                Icon(Icons.add_circle_outline, color: maroon.withValues(alpha: 0.6), size: 28),
+                Icon(
+                  Icons.add_circle_outline,
+                  color: maroon.withValues(alpha: 0.6),
+                  size: 28,
+                ),
                 const SizedBox(height: 6),
                 Text(
                   'Add a Room',
@@ -277,38 +273,40 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ),
           ),
         ),
-
-        if (_declaredTotalRooms != null && _rooms.length != _declaredTotalRooms)
+        if (_declaredTotalRooms != null &&
+            _rooms.length != _declaredTotalRooms) ...[
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               _rooms.length < _declaredTotalRooms!
                   ? 'Add ${_declaredTotalRooms! - _rooms.length} more room${_declaredTotalRooms! - _rooms.length == 1 ? '' : 's'} to match the total entered in Step 1'
                   : 'You have ${_rooms.length - _declaredTotalRooms!} more room${_rooms.length - _declaredTotalRooms! == 1 ? '' : 's'} than declared in Step 1',
-              style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.5)),
+              style: TextStyle(
+                fontSize: 12,
+                color: maroon.withValues(alpha: 0.5),
+              ),
             ),
           ),
+        ],
       ],
     );
   }
 
-  // Summarizes booking availability across all added rooms: how many
-  // Complete Rooms are vacant/filled, and how many total seats are open
-  // across Per Seat rooms — so the warden can see booking capacity at a
-  // glance while adding rooms.
   Widget _buildAvailabilitySummary(Color fg) {
-    final completeRooms = _rooms.where((r) => r['bookingType'] == 'Room').toList();
+    final completeRooms = _rooms
+        .where((r) => r['bookingType'] == 'Room')
+        .toList();
     final vacantRooms = completeRooms.where((r) => r['vacant'] == true).length;
     final filledRooms = completeRooms.length - vacantRooms;
 
     final seatRooms = _rooms.where((r) => r['bookingType'] == 'Seat').toList();
     final availableSeats = seatRooms.fold<int>(
       0,
-          (sum, r) => sum + (r['availableSeats'] as int? ?? 0),
+      (sum, r) => sum + (r['availableSeats'] as int? ?? 0),
     );
     final totalSeats = seatRooms.fold<int>(
       0,
-          (sum, r) => sum + (r['roomType'] as int? ?? 0),
+      (sum, r) => sum + (r['roomType'] as int? ?? 0),
     );
 
     return Container(
@@ -331,14 +329,19 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               ),
             ),
           if (completeRooms.isNotEmpty && seatRooms.isNotEmpty)
-            Container(width: 1, height: 34, color: maroon.withValues(alpha: 0.15)),
+            Container(
+              width: 1,
+              height: 34,
+              color: maroon.withValues(alpha: 0.15),
+            ),
           if (seatRooms.isNotEmpty)
             Expanded(
               child: _summaryStat(
                 icon: Icons.event_seat_outlined,
                 label: 'Seats Available',
                 value: '$availableSeats / $totalSeats',
-                sublabel: '${seatRooms.length} room${seatRooms.length == 1 ? '' : 's'}',
+                sublabel:
+                    '${seatRooms.length} room${seatRooms.length == 1 ? '' : 's'}',
               ),
             ),
         ],
@@ -369,7 +372,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ),
             Text(
               '$label • $sublabel',
-              style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.6)),
+              style: TextStyle(
+                fontSize: 10,
+                color: maroon.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),
@@ -403,8 +409,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Add your rooms first — you\'ll set the rent and advance for each one here.',
-                    style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.7)),
+                    "Add your rooms first — you'll set the rent and advance for each one here.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: maroon.withValues(alpha: 0.7),
+                    ),
                   ),
                 ),
               ],
@@ -430,7 +439,11 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.door_front_door_outlined, color: maroon, size: 18),
+                      const Icon(
+                        Icons.door_front_door_outlined,
+                        color: maroon,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Room ${room['number']}',
@@ -443,7 +456,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       const SizedBox(width: 8),
                       Text(
                         '• ${room['roomType']} Seater',
-                        style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: maroon.withValues(alpha: 0.6),
+                        ),
                       ),
                     ],
                   ),
@@ -451,25 +467,32 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   _inputField(
                     key: ValueKey('room_price_${room['number']}_$i'),
                     initialValue: price == 0 ? '' : price.toString(),
-                    label: isWholeRoom ? 'Rent per Month (per room)' : 'Rent per Month (per seat)',
+                    label: isWholeRoom
+                        ? 'Rent per Month (per room)'
+                        : 'Rent per Month (per seat)',
                     hint: 'e.g. 12000',
                     icon: Icons.payments_outlined,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Required' : null,
                     onChanged: (v) => _rooms[i]['price'] = int.tryParse(v) ?? 0,
                   ),
                   const SizedBox(height: 12),
                   _inputField(
                     key: ValueKey('room_advance_${room['number']}_$i'),
                     initialValue: advance == 0 ? '' : advance.toString(),
-                    label: isWholeRoom ? 'Advance Security (per room)' : 'Advance Security (per seat)',
+                    label: isWholeRoom
+                        ? 'Advance Security (per room)'
+                        : 'Advance Security (per seat)',
                     hint: 'e.g. 16000',
                     icon: Icons.lock_outline,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
-                    onChanged: (v) => _rooms[i]['advance'] = int.tryParse(v) ?? 0,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Required' : null,
+                    onChanged: (v) =>
+                        _rooms[i]['advance'] = int.tryParse(v) ?? 0,
                   ),
                 ],
               ),
@@ -527,7 +550,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   children: [
                     Icon(
                       icons[facility] ?? Icons.check_circle_outline,
-                      color: selected ? Colors.white : maroon.withValues(alpha: 0.6),
+                      color: selected
+                          ? Colors.white
+                          : maroon.withValues(alpha: 0.6),
                       size: 26,
                     ),
                     const SizedBox(height: 6),
@@ -537,7 +562,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: selected ? Colors.white : maroon.withValues(alpha: 0.7),
+                        color: selected
+                            ? Colors.white
+                            : maroon.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -574,8 +601,6 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           keyboardType: TextInputType.phone,
         ),
         const SizedBox(height: 14),
-
-        // In-app chat toggle
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -601,7 +626,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     ),
                     Text(
                       'Allow seekers to message you directly',
-                      style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: maroon.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -614,7 +642,6 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             ],
           ),
         ),
-
         const SizedBox(height: 28),
         _sectionTitle('Photos', fg),
         const SizedBox(height: 6),
@@ -623,8 +650,6 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 14),
-
-        // Photo grid
         GridView.count(
           crossAxisCount: 3,
           shrinkWrap: true,
@@ -632,16 +657,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
           children: [
-            // Uploaded photos (dummy placeholders)
-            ..._photos.map((_) => Container(
-              decoration: BoxDecoration(
-                color: maroon.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+            ..._photos.map(
+              (_) => Container(
+                decoration: BoxDecoration(
+                  color: maroon.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.image, color: maroon),
               ),
-              child: const Icon(Icons.image, color: maroon),
-            )),
-
-            // Add photo button
+            ),
             GestureDetector(
               onTap: () {
                 // TODO: integrate image_picker
@@ -656,12 +680,18 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_photo_alternate_outlined,
-                        color: maroon.withValues(alpha: 0.6), size: 28),
+                    Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: maroon.withValues(alpha: 0.6),
+                      size: 28,
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Add',
-                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: maroon.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -674,58 +704,45 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   }
 
   // ── Add Room Bottom Sheet ─────────────────────────────────────────────────
-  // Room types available: 1 (Single) through 6 seater.
   static const List<int> _roomTypeOptions = [1, 2, 3, 4, 5, 6];
 
   void _showAddRoomSheet({int? existingIndex}) {
     final existing = existingIndex != null ? _rooms[existingIndex] : null;
 
     final roomNumCtrl = TextEditingController(text: existing?['number'] ?? '');
-
-    // 'Room' = whole room booked together, occupancy flexible.
-    // 'Seat' = individual seats/beds booked and priced separately.
     String bookingType = existing?['bookingType'] ?? 'Room';
     int roomType = existing?['roomType'] ?? 1;
     bool attachedWashroom = existing?['attachedWashroom'] ?? false;
-    // For Complete Room listings, tracks whether this room is currently
-    // free to book (Vacant) or already occupied (Filled).
-    // NOTE: `?? true` defaults missing 'vacant' to Vacant. Harmless now
-    // since all rooms are created fresh in this session, but once rooms
-    // are loaded back from Firestore, older documents saved before this
-    // field existed will silently read as Vacant — revisit if that
-    // matters (e.g. migrate on read, or default to Filled instead).
     bool roomVacant = existing?['vacant'] ?? true;
     String? errorText;
 
-    // When some seats are being marked available, the warden can say
-    // when they're actually free to move into — either the same date
-    // for every available seat, or a different date per seat.
     bool sameDateForAll = existing?['availabilitySameDate'] ?? true;
-    List<DateTime> availabilityDates = existing != null && existing['availabilityDates'] != null
-        ? (existing['availabilityDates'] as List).map((s) => DateTime.parse(s as String)).toList()
+    List<DateTime> availabilityDates =
+        existing != null && existing['availabilityDates'] != null
+        ? (existing['availabilityDates'] as List)
+              .map((s) => DateTime.parse(s as String))
+              .toList()
         : <DateTime>[];
 
     void syncAvailabilityDates(int count) {
       if (count > availabilityDates.length) {
         availabilityDates.addAll(
-          List.generate(count - availabilityDates.length, (_) => DateTime.now()),
+          List.generate(
+            count - availabilityDates.length,
+            (_) => DateTime.now(),
+          ),
         );
       } else if (count < availabilityDates.length) {
         availabilityDates.removeRange(count, availabilityDates.length);
       }
     }
 
-    // For a Complete Room booking, available seats always equals the room
-    // type (the whole room is the unit), so there's nothing to ask for.
     final availableSeatsCtrl = TextEditingController(
       text: existing != null
           ? existing['availableSeats'].toString()
           : (bookingType == 'Room' ? roomType.toString() : ''),
     );
 
-    // Make sure the initial list already matches the starting seat count.
-    // For a Complete Room that's Vacant, there's just the one "Available
-    // From" date for the whole room.
     if (bookingType == 'Seat') {
       syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
     } else if (bookingType == 'Room' && roomVacant) {
@@ -767,57 +784,64 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 // 1. Complete Room / Per Seat
                 const Text(
                   'Listing Type',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: maroon,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  children: [
-                    ('Room', 'Complete Room'),
-                    ('Seat', 'Per Seat'),
-                  ].map((entry) {
-                    final (value, label) = entry;
-                    final selected = bookingType == value;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setSheetState(() {
-                          bookingType = value;
-                          // Whole-room bookings default to full occupancy;
-                          // per-seat listings start with none marked available yet.
-                          if (bookingType == 'Room') {
-                            availableSeatsCtrl.text = roomType.toString();
-                            if (roomVacant) {
-                              syncAvailabilityDates(1);
-                            } else {
-                              availabilityDates.clear();
-                            }
-                          } else {
-                            syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
-                          }
-                          errorText = null;
-                        }),
-                        child: Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: selected ? maroon : maroon.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: selected ? maroon : maroon.withValues(alpha: 0.25),
+                  children: [('Room', 'Complete Room'), ('Seat', 'Per Seat')]
+                      .map((entry) {
+                        final (value, label) = entry;
+                        final selected = bookingType == value;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => setSheetState(() {
+                              bookingType = value;
+                              if (bookingType == 'Room') {
+                                availableSeatsCtrl.text = roomType.toString();
+                                if (roomVacant) {
+                                  syncAvailabilityDates(1);
+                                } else {
+                                  availabilityDates.clear();
+                                }
+                              } else {
+                                syncAvailabilityDates(
+                                  int.tryParse(availableSeatsCtrl.text) ?? 0,
+                                );
+                              }
+                              errorText = null;
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? maroon
+                                    : maroon.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: selected
+                                      ? maroon
+                                      : maroon.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: selected ? Colors.white : maroon,
+                                ),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? Colors.white : maroon,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                        );
+                      })
+                      .toList(),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
@@ -825,25 +849,29 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     bookingType == 'Room'
                         ? 'Tenant books the whole room and can adjust occupancy freely.'
                         : 'Tenant books a single seat/bed; only the seats you mark available can be booked.',
-                    style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: maroon.withValues(alpha: 0.55),
+                    ),
                   ),
                 ),
 
-                // 1b. Room Status (Vacant / Filled) — only relevant for
-                // Complete Room listings, since Per Seat availability is
-                // already tracked via Available Seats.
+                // 1b. Room Status
                 if (bookingType == 'Room') ...[
                   const SizedBox(height: 14),
                   const Text(
                     'Room Status',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: maroon,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
-                    children: [
-                      (true, 'Vacant'),
-                      (false, 'Filled'),
-                    ].map((entry) {
+                    children: [(true, 'Vacant'), (false, 'Filled')].map((
+                      entry,
+                    ) {
                       final (value, label) = entry;
                       final selected = roomVacant == value;
                       return Expanded(
@@ -890,30 +918,38 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     child: Text(
                       roomVacant
                           ? 'This room is free and will count toward available bookings.'
-                          : 'This room is currently occupied and won\'t be offered for booking.',
-                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                          : "This room is currently occupied and won't be offered for booking.",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: maroon.withValues(alpha: 0.55),
+                      ),
                     ),
                   ),
-                  // When a Complete Room is marked Vacant, ask when it's
-                  // actually free for a new tenant to move into — mirrors
-                  // the Per Seat "Availability Date" below, but as a single
-                  // date for the whole room.
                   if (roomVacant) ...[
                     const SizedBox(height: 12),
                     const Text(
                       'Available From',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: maroon,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'When will this room be free for a new tenant to move in?',
-                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: maroon.withValues(alpha: 0.55),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     _datePickerField(
                       context: context,
                       label: 'Available From',
-                      date: availabilityDates.isNotEmpty ? availabilityDates.first : DateTime.now(),
+                      date: availabilityDates.isNotEmpty
+                          ? availabilityDates.first
+                          : DateTime.now(),
                       onPick: (picked) => setSheetState(() {
                         if (availabilityDates.isEmpty) {
                           availabilityDates.add(picked);
@@ -926,7 +962,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 ],
                 const SizedBox(height: 16),
 
-                // 2. Room Details
+                // 2. Room Number
                 _inputField(
                   controller: roomNumCtrl,
                   label: 'Room Number / Name',
@@ -935,10 +971,14 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 3. Room Type (Seater)
+                // 3. Room Type
                 const Text(
                   'Room Type',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: maroon,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -953,13 +993,16 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       return GestureDetector(
                         onTap: () => setSheetState(() {
                           roomType = type;
-                          // Available seats can never exceed the room's capacity.
-                          final currentAvailable = int.tryParse(availableSeatsCtrl.text) ?? 0;
-                          if (bookingType == 'Room' || currentAvailable > roomType) {
+                          final currentAvailable =
+                              int.tryParse(availableSeatsCtrl.text) ?? 0;
+                          if (bookingType == 'Room' ||
+                              currentAvailable > roomType) {
                             availableSeatsCtrl.text = roomType.toString();
                           }
                           if (bookingType == 'Seat') {
-                            syncAvailabilityDates(int.tryParse(availableSeatsCtrl.text) ?? 0);
+                            syncAvailabilityDates(
+                              int.tryParse(availableSeatsCtrl.text) ?? 0,
+                            );
                           }
                           errorText = null;
                         }),
@@ -967,10 +1010,14 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: selected ? maroon : maroon.withValues(alpha: 0.08),
+                            color: selected
+                                ? maroon
+                                : maroon.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: selected ? maroon : maroon.withValues(alpha: 0.25),
+                              color: selected
+                                  ? maroon
+                                  : maroon.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Text(
@@ -986,11 +1033,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     },
                   ),
                 ),
-                // 4. Available Seats — only relevant for Per Seat listings.
-                // A Complete Room booking is priced/booked as one unit, so
-                // the room type (seater) alone is enough. 0 is a valid
-                // value here — it means every seat in the room is currently
-                // occupied, which the warden still needs to record.
+
+                // 4. Available Seats (Per Seat only)
                 if (bookingType == 'Seat') ...[
                   const SizedBox(height: 14),
                   _inputField(
@@ -1013,57 +1057,68 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       return null;
                     },
                   ),
-
-                  // When to tell tenants these seats can actually be moved
-                  // into — same date for every open seat, or a separate
-                  // date per seat (e.g. one tenant leaves this week,
-                  // another next month).
                   if ((int.tryParse(availableSeatsCtrl.text) ?? 0) > 0) ...[
                     const SizedBox(height: 14),
                     const Text(
                       'Availability Date(s)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: maroon,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'When will these seats be free for a new tenant to move in?',
-                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: maroon.withValues(alpha: 0.55),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (availabilityDates.length > 1) ...[
                       Row(
-                        children: [
-                          (true, 'Same date for all'),
-                          (false, 'Set individually'),
-                        ].map((entry) {
-                          final (value, label) = entry;
-                          final selected = sameDateForAll == value;
-                          return Expanded(
-                            child: GestureDetector(
-                              onTap: () => setSheetState(() => sameDateForAll = value),
-                              child: Container(
-                                margin: const EdgeInsets.only(right: 8),
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: selected ? maroon : maroon.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: selected ? maroon : maroon.withValues(alpha: 0.25),
+                        children:
+                            [
+                              (true, 'Same date for all'),
+                              (false, 'Set individually'),
+                            ].map((entry) {
+                              final (value, label) = entry;
+                              final selected = sameDateForAll == value;
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setSheetState(
+                                    () => sameDateForAll = value,
+                                  ),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? maroon
+                                          : maroon.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: selected
+                                            ? maroon
+                                            : maroon.withValues(alpha: 0.25),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      label,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: selected ? Colors.white : maroon,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  label,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: selected ? Colors.white : maroon,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                              );
+                            }).toList(),
                       ),
                       const SizedBox(height: 10),
                     ],
@@ -1086,7 +1141,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                             context: context,
                             label: 'Seat ${i + 1} — Available From',
                             date: availabilityDates[i],
-                            onPick: (picked) => setSheetState(() => availabilityDates[i] = picked),
+                            onPick: (picked) => setSheetState(
+                              () => availabilityDates[i] = picked,
+                            ),
                           ),
                         );
                       }),
@@ -1096,7 +1153,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
                 // 5. Attached Washroom
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: maroon.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(10),
@@ -1114,7 +1174,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       ),
                       Switch(
                         value: attachedWashroom,
-                        onChanged: (v) => setSheetState(() => attachedWashroom = v),
+                        onChanged: (v) =>
+                            setSheetState(() => attachedWashroom = v),
                         activeThumbColor: maroon,
                       ),
                     ],
@@ -1140,62 +1201,59 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       ),
                     ),
                     onPressed: () {
-                      // Complete Room bookings always use the full room type
-                      // as the "available seats" — there's nothing to ask.
-                      // For Per Seat rooms, an empty field is treated as not
-                      // entered (still required) — 0 is a distinct, valid
-                      // value meaning "fully occupied".
                       final seatsText = availableSeatsCtrl.text.trim();
                       final parsedSeats = int.tryParse(seatsText);
-                      final available =
-                      bookingType == 'Room' ? roomType : (parsedSeats ?? -1);
+                      final available = bookingType == 'Room'
+                          ? roomType
+                          : (parsedSeats ?? -1);
 
                       final roomNum = roomNumCtrl.text.trim();
                       if (roomNum.isEmpty) {
-                        setSheetState(() => errorText = 'Room number/name is required');
+                        setSheetState(
+                          () => errorText = 'Room number/name is required',
+                        );
                         return;
                       }
-                      // Block duplicate room numbers — compared
-                      // case-insensitively, and skipping the room currently
-                      // being edited so re-saving it doesn't flag itself.
-                      final isDuplicate = _rooms.asMap().entries.any((entry) =>
-                      entry.key != existingIndex &&
-                          (entry.value['number'] as String).toLowerCase() ==
-                              roomNum.toLowerCase());
+                      final isDuplicate = _rooms.asMap().entries.any(
+                        (entry) =>
+                            entry.key != existingIndex &&
+                            (entry.value['number'] as String).toLowerCase() ==
+                                roomNum.toLowerCase(),
+                      );
                       if (isDuplicate) {
                         setSheetState(
-                              () => errorText = 'Room "$roomNum" already exists',
+                          () => errorText = 'Room "$roomNum" already exists',
                         );
                         return;
                       }
                       if (bookingType == 'Seat' &&
-                          (seatsText.isEmpty || available < 0 || available > roomType)) {
+                          (seatsText.isEmpty ||
+                              available < 0 ||
+                              available > roomType)) {
                         setSheetState(
-                              () => errorText = 'Available seats must be between 0 and $roomType',
+                          () => errorText =
+                              'Available seats must be between 0 and $roomType',
                         );
                         return;
                       }
 
                       final room = {
-                        'number': roomNumCtrl.text.trim(),
+                        'number': roomNum,
                         'bookingType': bookingType,
                         'roomType': roomType,
                         'availableSeats': available,
                         'attachedWashroom': attachedWashroom,
-                        // Only meaningful for Complete Room listings; a Per
-                        // Seat room's availability is derived from
-                        // availableSeats instead.
-                        'vacant': bookingType == 'Room' ? roomVacant : (available > 0),
-                        // Rent & advance are set later, in the Pricing step.
+                        'vacant': bookingType == 'Room'
+                            ? roomVacant
+                            : (available > 0),
                         'price': existing?['price'] ?? 0,
                         'advance': existing?['advance'] ?? 0,
-                        // Meaningful for Per Seat rooms with at least one
-                        // seat currently marked available, or a Complete
-                        // Room that's currently Vacant.
                         'availabilityDates':
-                        (bookingType == 'Seat' && available > 0) ||
-                            (bookingType == 'Room' && roomVacant)
-                            ? availabilityDates.map((d) => d.toIso8601String()).toList()
+                            (bookingType == 'Seat' && available > 0) ||
+                                (bookingType == 'Room' && roomVacant)
+                            ? availabilityDates
+                                  .map((d) => d.toIso8601String())
+                                  .toList()
                             : <String>[],
                         'availabilitySameDate': sameDateForAll,
                       };
@@ -1235,9 +1293,6 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         return;
       }
       final declared = _declaredTotalRooms;
-      // declared should always be set by this point since Step 1's
-      // validator requires it, but fall back to just requiring >=1 room
-      // if it's somehow missing.
       if (declared != null && _rooms.length != declared) {
         final remaining = declared - _rooms.length;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1245,7 +1300,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             content: Text(
               remaining > 0
                   ? 'Add $remaining more room${remaining == 1 ? '' : 's'} to match the total ($declared) entered in Step 1'
-                  : 'You\'ve added ${_rooms.length} rooms but Step 1 says $declared — remove ${-remaining} or update the total',
+                  : "You've added ${_rooms.length} rooms but Step 1 says $declared — remove ${-remaining} or update the total",
             ),
           ),
         );
@@ -1257,13 +1312,75 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     }
   }
 
-  void _handleSubmit() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: save to Firestore
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_rooms.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hostel listed successfully!')),
+        const SnackBar(
+          content: Text('Add at least one room before submitting'),
+        ),
       );
-      Navigator.pop(context);
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final selectedFacilities = _facilities.entries
+          .where((e) => e.value)
+          .map((e) => e.key)
+          .toList();
+
+      final roomPayloads = _rooms.map((r) {
+        return {
+          'number': r['number'],
+          'bookingType': r['bookingType'],
+          'roomType': r['roomType'],
+          'availableSeats': r['availableSeats'],
+          'attachedWashroom': r['attachedWashroom'],
+          'price': r['price'],
+          'advance': r['advance'],
+          'vacant': r['vacant'],
+          'availabilityDates': r['availabilityDates'] ?? <String>[],
+        };
+      }).toList();
+
+      final created = await _hostelService.createHostel(
+        name: _nameCtrl.text.trim(),
+        city: _cityCtrl.text.trim(),
+        address: _addressCtrl.text.trim(),
+        type: _selectedType,
+        facilities: selectedFacilities,
+        photos: _photos,
+        phone: _phoneCtrl.text.trim(),
+        whatsapp: _whatsappCtrl.text.trim().isEmpty
+            ? null
+            : _whatsappCtrl.text.trim(),
+        inAppChat: _inAppChat,
+        active: true,
+        rooms: roomPayloads,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Hostel "${created['name']}" listed successfully!'),
+        ),
+      );
+
+      Navigator.pop(context, created);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 }
@@ -1314,7 +1431,10 @@ class _RoomCard extends StatelessWidget {
                     if (room['bookingType'] == 'Room') ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: room['vacant'] == true
                               ? Colors.green.withValues(alpha: 0.15)
@@ -1326,18 +1446,21 @@ class _RoomCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: room['vacant'] == true ? Colors.green[800] : maroon,
+                            color: room['vacant'] == true
+                                ? Colors.green[800]
+                                : maroon,
                           ),
                         ),
                       ),
                     ],
-                    // Per Seat rooms don't get a Vacant/Filled toggle like
-                    // Complete Rooms do, but a fully-booked seat room is
-                    // just as worth flagging at a glance.
-                    if (room['bookingType'] == 'Seat' && room['availableSeats'] == 0) ...[
+                    if (room['bookingType'] == 'Seat' &&
+                        room['availableSeats'] == 0) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: maroon.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
@@ -1357,30 +1480,46 @@ class _RoomCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${room['roomType']} Seater • '
-                      '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat • ${room['availableSeats']}/${room['roomType']} available'} • '
-                      '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
-                  style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+                  '${room['bookingType'] == 'Room' ? 'Complete Room' : 'Per Seat • ${room['availableSeats']}/${room['roomType']} available'} • '
+                  '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: maroon.withValues(alpha: 0.6),
+                  ),
                 ),
                 if (((room['bookingType'] == 'Seat' &&
-                    (room['availableSeats'] as int) > 0) ||
-                    (room['bookingType'] == 'Room' &&
-                        room['vacant'] == true)) &&
-                    (room['availabilityDates'] as List?)?.isNotEmpty == true) ...[
+                            (room['availableSeats'] as int) > 0) ||
+                        (room['bookingType'] == 'Room' &&
+                            room['vacant'] == true)) &&
+                    (room['availabilityDates'] as List?)?.isNotEmpty ==
+                        true) ...[
                   const SizedBox(height: 2),
                   Text(
                     _availabilitySummary(room),
-                    style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.55), fontStyle: FontStyle.italic),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: maroon.withValues(alpha: 0.55),
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ],
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined, color: maroon.withValues(alpha: 0.6), size: 18),
+            icon: Icon(
+              Icons.edit_outlined,
+              color: maroon.withValues(alpha: 0.6),
+              size: 18,
+            ),
             onPressed: onEdit,
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, color: maroon.withValues(alpha: 0.6), size: 18),
+            icon: Icon(
+              Icons.delete_outline,
+              color: maroon.withValues(alpha: 0.6),
+              size: 18,
+            ),
             onPressed: onDelete,
           ),
         ],
@@ -1393,7 +1532,13 @@ class _RoomCard extends StatelessWidget {
 class _StepIndicator extends StatelessWidget {
   final int currentStep;
   static const maroon = Color(0xFF800020);
-  final List<String> labels = const ['Info', 'Rooms', 'Pricing', 'Facilities', 'Contact'];
+  final List<String> labels = const [
+    'Info',
+    'Rooms',
+    'Pricing',
+    'Facilities',
+    'Contact',
+  ];
 
   const _StepIndicator({required this.currentStep});
 
@@ -1414,20 +1559,28 @@ class _StepIndicator extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: done || active ? maroon : maroon.withValues(alpha: 0.15),
+                        color: done || active
+                            ? maroon
+                            : maroon.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: done
-                            ? const Icon(Icons.check, color: Colors.white, size: 14)
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 14,
+                              )
                             : Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: active ? Colors.white : maroon.withValues(alpha: 0.5),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                                '${i + 1}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: active
+                                      ? Colors.white
+                                      : maroon.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1436,7 +1589,9 @@ class _StepIndicator extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         color: active ? maroon : maroon.withValues(alpha: 0.4),
-                        fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: active
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                   ],
@@ -1446,7 +1601,9 @@ class _StepIndicator extends StatelessWidget {
                     child: Container(
                       height: 1.5,
                       margin: const EdgeInsets.only(bottom: 16),
-                      color: i < currentStep ? maroon : maroon.withValues(alpha: 0.2),
+                      color: i < currentStep
+                          ? maroon
+                          : maroon.withValues(alpha: 0.2),
                     ),
                   ),
               ],
@@ -1462,6 +1619,7 @@ class _StepIndicator extends StatelessWidget {
 class _BottomButtons extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
+  final bool isSubmitting;
   final VoidCallback onBack;
   final VoidCallback onNext;
   final VoidCallback onSubmit;
@@ -1471,6 +1629,7 @@ class _BottomButtons extends StatelessWidget {
   const _BottomButtons({
     required this.currentStep,
     required this.totalSteps,
+    required this.isSubmitting,
     required this.onBack,
     required this.onNext,
     required this.onSubmit,
@@ -1479,6 +1638,8 @@ class _BottomButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isLast = currentStep == totalSteps - 1;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
@@ -1497,7 +1658,7 @@ class _BottomButtons extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: onBack,
+                onPressed: isSubmitting ? null : onBack,
                 child: const Text('Back', style: TextStyle(color: maroon)),
               ),
             ),
@@ -1512,15 +1673,24 @@ class _BottomButtons extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: currentStep == totalSteps - 1 ? onSubmit : onNext,
-              child: Text(
-                currentStep == totalSteps - 1 ? 'Submit Hostel' : 'Next',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              onPressed: isSubmitting ? null : (isLast ? onSubmit : onNext),
+              child: isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation(Color(0xFFF3E6D5)),
+                      ),
+                    )
+                  : Text(
+                      isLast ? 'Submit Hostel' : 'Next',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -1537,7 +1707,8 @@ String _availabilitySummary(Map<String, dynamic> room) {
   if (raw.isEmpty) return '';
   final dates = raw.map((s) => DateTime.parse(s as String)).toList();
   final sameDateForAll = room['availabilitySameDate'] == true;
-  final allSame = dates.map((d) => '${d.year}-${d.month}-${d.day}').toSet().length == 1;
+  final allSame =
+      dates.map((d) => '${d.year}-${d.month}-${d.day}').toSet().length == 1;
   if (sameDateForAll || allSame) {
     return 'Available from ${_formatDate(dates.first)}';
   }
@@ -1572,8 +1743,20 @@ Widget _datePickerField({
         children: [
           const Icon(Icons.calendar_today_outlined, color: maroon, size: 18),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13, color: maroon))),
-          Text(_formatDate(date), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: maroon)),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: maroon),
+            ),
+          ),
+          Text(
+            _formatDate(date),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: maroon,
+            ),
+          ),
         ],
       ),
     ),
@@ -1582,11 +1765,7 @@ Widget _datePickerField({
 
 Widget _sectionTitle(String title, Color fg) => Text(
   title,
-  style: TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
-    color: fg,
-  ),
+  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: fg),
 );
 
 Widget _sectionLabel(String label, Color fg) => Text(
@@ -1610,40 +1789,53 @@ Widget _inputField({
   List<TextInputFormatter>? inputFormatters,
   String? Function(String?)? validator,
   void Function(String)? onChanged,
-}) =>
-    TextFormField(
-      key: key,
-      controller: controller,
-      initialValue: controller == null ? initialValue : null,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      inputFormatters: inputFormatters,
-      validator: validator,
-      onChanged: onChanged,
-      style: const TextStyle(color: Color(0xFF800020), fontSize: 14),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF800020).withValues(alpha: 0.6), size: 20),
-        labelStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.7), fontSize: 13),
-        hintStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.35), fontSize: 13),
-        filled: true,
-        fillColor: const Color(0xFF800020).withValues(alpha: 0.06),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF800020)),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
+}) => TextFormField(
+  key: key,
+  controller: controller,
+  initialValue: controller == null ? initialValue : null,
+  maxLines: maxLines,
+  keyboardType: keyboardType,
+  inputFormatters: inputFormatters,
+  validator: validator,
+  onChanged: onChanged,
+  style: const TextStyle(color: Color(0xFF800020), fontSize: 14),
+  decoration: InputDecoration(
+    labelText: label,
+    hintText: hint,
+    prefixIcon: Icon(
+      icon,
+      color: const Color(0xFF800020).withValues(alpha: 0.6),
+      size: 20,
+    ),
+    labelStyle: TextStyle(
+      color: const Color(0xFF800020).withValues(alpha: 0.7),
+      fontSize: 13,
+    ),
+    hintStyle: TextStyle(
+      color: const Color(0xFF800020).withValues(alpha: 0.35),
+      fontSize: 13,
+    ),
+    filled: true,
+    fillColor: const Color(0xFF800020).withValues(alpha: 0.06),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(
+        color: const Color(0xFF800020).withValues(alpha: 0.2),
       ),
-    );
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(
+        color: const Color(0xFF800020).withValues(alpha: 0.2),
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Color(0xFF800020)),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.red),
+    ),
+  ),
+);
