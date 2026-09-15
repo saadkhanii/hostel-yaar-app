@@ -83,8 +83,17 @@ class _LoginScreenState extends State<LoginScreen> {
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
     const maroon = Color(0xFF800020);
-
-    return Scaffold(
+    return PopScope(
+      // Intercept back button: if there's nowhere to go in the stack
+      // (login was reached via logout / navigateAndRemoveUntil),
+      // send the user to role selection instead of a black screen.
+        canPop: Navigator.of(context).canPop(),
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            NavigationService.navigateReplacementTo(AppRoutes.roleSelection);
+          }
+        },
+        child: Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -96,7 +105,15 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 24),
                 IconButton(
-                  onPressed: () => NavigationService.goBack(),
+                  onPressed: () {
+                    if (NavigationService.canGoBack()) {
+                      NavigationService.goBack();
+                    } else {
+                      NavigationService.navigateReplacementTo(
+                        AppRoutes.roleSelection,
+                      );
+                    }
+                  },
                   icon: Icon(Icons.arrow_back, color: fg),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -269,6 +286,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

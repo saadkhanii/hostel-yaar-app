@@ -44,25 +44,27 @@ class _SignupScreenState extends State<SignupScreen> {
     try {
       final roleString = _selectedRole == _SignupRole.seeker ? 'seeker' : 'warden';
 
-      final userData = await _authService.signup(
+      await _authService.signup(
         fullName: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
         role: roleString,
       );
 
-      print('=== SIGNUP SUCCESS ===');
-      print('Response: $userData');
-      print('Role returned: ${userData['role']}');
-      print('======================');
+      // Signup succeeded — but AuthService already stored a JWT for this
+      // user. We want them to log in manually to verify credentials, so
+      // clear that token and send them to login.
+      await _authService.logout();
 
       if (!mounted) return;
 
-      final String role = userData['role'] as String? ?? roleString;
-      final destination =
-      role == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created. Please log in.'),
+        ),
+      );
 
-      NavigationService.navigateAndRemoveUntil(destination);
+      NavigationService.navigateAndRemoveUntil(AppRoutes.login);
     } on Exception catch (e) {
       print('=== SIGNUP FAILED ===');
       print(e);

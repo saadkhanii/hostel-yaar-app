@@ -17,8 +17,9 @@ class SessionManager {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return AlertDialog(
-          backgroundColor:
-          isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
+          backgroundColor: isDark
+              ? const Color(0xFF1D2128)
+              : const Color(0xFFF3E6D5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -59,6 +60,6 @@ class SessionManager {
 
     // Clear the navigation stack so back button can't return to a
     // stale dashboard.
-    NavigationService.navigateAndRemoveUntil(AppRoutes.login);
+    NavigationService.navigateAndRemoveUntil(AppRoutes.roleSelection);
   }
 }
