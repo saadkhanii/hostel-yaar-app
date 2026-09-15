@@ -36,7 +36,10 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => LoginScreen(role: role));
 
       case AppRoutes.signup:
-        return MaterialPageRoute(builder: (_) => const SignupScreen());
+        final role = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => SignupScreen(initialRole: role),
+        );
 
       case AppRoutes.forgotPassword:
         return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());

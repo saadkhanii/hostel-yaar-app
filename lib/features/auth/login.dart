@@ -44,28 +44,43 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
-      print('=== LOGIN SUCCESS ===');
-      print('Full response: $userData');
-      print('Role value: "${userData['role']}"');
-      print('Role type: ${userData['role'].runtimeType}');
-      print('=====================');
-
       if (!mounted) return;
 
-      final String role = userData['role'] as String? ?? 'seeker';
-      final destination =
-      role == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
+      final String actualRole = userData['role'] as String? ?? 'seeker';
+      final String? expectedRole = widget.role;
 
-      print('Navigating to: $destination');
+      // If the user came from role selection with an explicit role,
+      // enforce it. If they deep-linked straight to /login (widget.role
+      // is null), let them in as whatever role the backend says.
+      if (expectedRole != null && expectedRole != actualRole) {
+        // Credentials are valid, but for the wrong role. Clear the
+        // token that AuthService just stored so we don't leave a
+        // half-logged-in state behind.
+        await _authService.logout();
+
+        if (!mounted) return;
+
+        final expectedLabel =
+        expectedRole == 'warden' ? 'warden' : 'hostel seeker';
+        final actualLabel = actualRole == 'warden' ? 'warden' : 'hostel seeker';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This account is registered as a $actualLabel, not a '
+                  '$expectedLabel. Please use the correct login option.',
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+
+      final destination =
+      actualRole == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
 
       NavigationService.navigateAndRemoveUntil(destination);
-    } catch (e, stackTrace) {
-      print('=== LOGIN CAUGHT EXCEPTION ===');
-      print('Exception: $e');
-      print('Type: ${e.runtimeType}');
-      print('Stack trace: $stackTrace');
-      print('==============================');
-
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -267,7 +282,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        NavigationService.navigateTo(AppRoutes.signup);
+                        NavigationService.navigateTo(
+                          AppRoutes.signup,
+                          arguments: widget.role,
+                        );
                       },
                       child: const Text(
                         'Sign Up',

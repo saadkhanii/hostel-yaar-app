@@ -8,7 +8,13 @@ import 'auth_text_field.dart';
 enum _SignupRole { seeker, warden }
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  /// Role the user already picked on the role selection screen
+  /// (or inherited from the login screen). When provided, the signup
+  /// screen locks to this role and disables the other option, so a
+  /// seeker path can't accidentally create a warden account.
+  final String? initialRole;
+
+  const SignupScreen({super.key, this.initialRole});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
@@ -16,13 +22,20 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
 
-  _SignupRole _selectedRole = _SignupRole.seeker;
+  late _SignupRole _selectedRole = widget.initialRole == 'warden'
+      ? _SignupRole.warden
+      : _SignupRole.seeker;
+
+  /// True if the caller specified a role. When locked, the user cannot
+  /// switch to the other role on this screen.
+  bool get _roleLocked => widget.initialRole != null;
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -42,7 +55,9 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final roleString = _selectedRole == _SignupRole.seeker ? 'seeker' : 'warden';
+      final roleString = _selectedRole == _SignupRole.seeker
+          ? 'seeker'
+          : 'warden';
 
       await _authService.signup(
         fullName: _nameController.text.trim(),
@@ -59,17 +74,11 @@ class _SignupScreenState extends State<SignupScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created. Please log in.'),
-        ),
+        const SnackBar(content: Text('Account created. Please log in.')),
       );
 
       NavigationService.navigateAndRemoveUntil(AppRoutes.login);
-    } on Exception catch (e) {
-      print('=== SIGNUP FAILED ===');
-      print(e);
-      print('=====================');
-
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
@@ -98,7 +107,15 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 const SizedBox(height: 24),
                 IconButton(
-                  onPressed: () => NavigationService.goBack(),
+                  onPressed: () {
+                    if (NavigationService.canGoBack()) {
+                      NavigationService.goBack();
+                    } else {
+                      NavigationService.navigateReplacementTo(
+                        AppRoutes.roleSelection,
+                      );
+                    }
+                  },
                   icon: Icon(Icons.arrow_back, color: fg),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -138,7 +155,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Hostel Seeker',
                           icon: Icons.person_search,
                           selected: _selectedRole == _SignupRole.seeker,
+                          disabled:
+                              _roleLocked &&
+                              _selectedRole != _SignupRole.seeker,
                           onTap: () {
+                            if (_roleLocked) return;
                             setState(() => _selectedRole = _SignupRole.seeker);
                           },
                         ),
@@ -148,7 +169,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Warden',
                           icon: Icons.home_work,
                           selected: _selectedRole == _SignupRole.warden,
+                          disabled:
+                              _roleLocked &&
+                              _selectedRole != _SignupRole.warden,
                           onTap: () {
+                            if (_roleLocked) return;
                             setState(() => _selectedRole = _SignupRole.warden);
                           },
                         ),
@@ -265,22 +290,22 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation(
-                          Color(0xFFF3E6D5),
-                        ),
-                      ),
-                    )
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation(
+                                Color(0xFFF3E6D5),
+                              ),
+                            ),
+                          )
                         : const Text(
-                      'Sign Up',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                            'Sign Up',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -296,9 +321,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     GestureDetector(
                       onTap: () {
-                        NavigationService.navigateTo(AppRoutes.login);
+                        NavigationService.navigateTo(
+                          AppRoutes.login,
+                          arguments: widget.initialRole,
+                        );
                       },
-                      child: Text(
+                      child: const Text(
                         'Log In',
                         style: TextStyle(
                           fontSize: 14,
@@ -323,12 +351,14 @@ class _RoleToggleButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool selected;
+  final bool disabled;
   final VoidCallback onTap;
 
   const _RoleToggleButton({
     required this.label,
     required this.icon,
     required this.selected,
+    this.disabled = false,
     required this.onTap,
   });
 
@@ -337,12 +367,16 @@ class _RoleToggleButton extends StatelessWidget {
     const maroon = Color(0xFF800020);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? maroon : Colors.transparent,
+          color: selected
+              ? maroon
+              : disabled
+              ? maroon.withValues(alpha: 0.03)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -351,7 +385,11 @@ class _RoleToggleButton extends StatelessWidget {
             Icon(
               icon,
               size: 18,
-              color: selected ? const Color(0xFFF3E6D5) : maroon,
+              color: selected
+                  ? const Color(0xFFF3E6D5)
+                  : disabled
+                  ? maroon.withValues(alpha: 0.3)
+                  : maroon,
             ),
             const SizedBox(width: 6),
             Text(
@@ -359,7 +397,11 @@ class _RoleToggleButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: selected ? const Color(0xFFF3E6D5) : maroon,
+                color: selected
+                    ? const Color(0xFFF3E6D5)
+                    : disabled
+                    ? maroon.withValues(alpha: 0.3)
+                    : maroon,
               ),
             ),
           ],
