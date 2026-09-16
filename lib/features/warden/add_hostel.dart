@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import '../../core/services/cloudinary_service.dart';
 import '../../core/services/hostel_service.dart';
 
 class AddHostelScreen extends StatefulWidget {
@@ -15,6 +17,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _hostelService = HostelService();
+  final _cloudinaryService = CloudinaryService();
+  final _imagePicker = ImagePicker();
+  final Set<String> _uploadingPhotos = {}; // tracks in-flight uploads
   int _currentStep = 0;
 
   // ── Basic Info ─────────────────────────────────────────────
@@ -132,6 +137,83 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
       default:
         return const SizedBox();
     }
+  }
+  Future<void> _pickAndUploadPhoto() async {
+    final source = await _pickSource();
+    if (source == null) return;
+
+    final XFile? picked = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 80, // shrink before upload to save bandwidth
+      maxWidth: 1600,
+    );
+    if (picked == null) return;
+
+    final file = File(picked.path);
+
+    // Show a placeholder entry so the grid reflects "uploading".
+    final placeholder = 'uploading-${DateTime.now().millisecondsSinceEpoch}';
+    setState(() {
+      _photos.add(placeholder);
+      _uploadingPhotos.add(placeholder);
+    });
+
+    try {
+      final url = await _cloudinaryService.uploadImage(file);
+      if (!mounted) return;
+      setState(() {
+        final idx = _photos.indexOf(placeholder);
+        if (idx != -1) _photos[idx] = url;
+        _uploadingPhotos.remove(placeholder);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photos.remove(placeholder);
+        _uploadingPhotos.remove(placeholder);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
+  }
+
+  Future<ImageSource?> _pickSource() async {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: const Color(0xFFF3E6D5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: maroon),
+              title: const Text('Choose from Gallery',
+                  style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading:
+              const Icon(Icons.camera_alt_outlined, color: maroon),
+              title: const Text('Take Photo',
+                  style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close, color: maroon),
+              title: const Text('Cancel', style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ── Step 1: Basic Info ────────────────────────────────────────────────────
@@ -657,20 +739,75 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           crossAxisSpacing: 8,
           mainAxisSpacing: 8,
           children: [
-            ..._photos.map(
-              (_) => Container(
-                decoration: BoxDecoration(
-                  color: maroon.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.image, color: maroon),
-              ),
-            ),
+            ..._photos.asMap().entries.map((entry) {
+              final i = entry.key;
+              final url = entry.value;
+              final isUploading = _uploadingPhotos.contains(url);
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: isUploading
+                        ? Container(
+                      color: maroon.withValues(alpha: 0.1),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.4,
+                          valueColor: AlwaysStoppedAnimation(maroon),
+                        ),
+                      ),
+                    )
+                        : Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          color: maroon.withValues(alpha: 0.05),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                AlwaysStoppedAnimation(maroon),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stack) => Container(
+                        color: maroon.withValues(alpha: 0.1),
+                        child: Icon(Icons.broken_image_outlined,
+                            color: maroon.withValues(alpha: 0.4)),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: GestureDetector(
+                      onTap: () =>
+                          setState(() => _photos.removeAt(i)),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: maroon,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close,
+                            color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
             GestureDetector(
-              onTap: () {
-                // TODO: integrate image_picker
-                setState(() => _photos.add('placeholder'));
-              },
+              onTap: _pickAndUploadPhoto,
               child: Container(
                 decoration: BoxDecoration(
                   color: maroon.withValues(alpha: 0.07),
@@ -680,18 +817,13 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.add_photo_alternate_outlined,
-                      color: maroon.withValues(alpha: 0.6),
-                      size: 28,
-                    ),
+                    Icon(Icons.add_photo_alternate_outlined,
+                        color: maroon.withValues(alpha: 0.6), size: 28),
                     const SizedBox(height: 4),
                     Text(
                       'Add',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: maroon.withValues(alpha: 0.6),
-                      ),
+                          fontSize: 11, color: maroon.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),

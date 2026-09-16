@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../core/services/cloudinary_service.dart';
 
 // Edits a hostel's own details — name, type, location, facilities, contact,
 // and photos. Deliberately does NOT touch rooms/pricing; those are managed
@@ -21,14 +24,27 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
   static const maroon = Color(0xFF800020);
 
   final _formKey = GlobalKey<FormState>();
+  final _cloudinaryService = CloudinaryService();
+  final _imagePicker = ImagePicker();
+  final Set<String> _uploadingPhotos = {};
 
-  late final _nameCtrl = TextEditingController(text: widget.hostel['name'] as String? ?? '');
-  late final _cityCtrl = TextEditingController(text: widget.hostel['city'] as String? ?? '');
-  late final _addressCtrl = TextEditingController(text: widget.hostel['address'] as String? ?? '');
+  late final _nameCtrl = TextEditingController(
+    text: widget.hostel['name'] as String? ?? '',
+  );
+  late final _cityCtrl = TextEditingController(
+    text: widget.hostel['city'] as String? ?? '',
+  );
+  late final _addressCtrl = TextEditingController(
+    text: widget.hostel['address'] as String? ?? '',
+  );
   late String _selectedType = widget.hostel['type'] as String? ?? 'Boys';
 
-  late final _phoneCtrl = TextEditingController(text: widget.hostel['phone'] as String? ?? '');
-  late final _whatsappCtrl = TextEditingController(text: widget.hostel['whatsapp'] as String? ?? '');
+  late final _phoneCtrl = TextEditingController(
+    text: widget.hostel['phone'] as String? ?? '',
+  );
+  late final _whatsappCtrl = TextEditingController(
+    text: widget.hostel['whatsapp'] as String? ?? '',
+  );
   late bool _inAppChat = widget.hostel['inAppChat'] as bool? ?? true;
 
   static const _facilityIcons = {
@@ -43,15 +59,15 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
     'Water Cooler': Icons.water_drop_outlined,
   };
 
-  // Pre-fill from the hostel's existing facilities where present, otherwise
-  // start every facility unselected.
+  // Pre-fill from the hostel's existing facilities where present.
   late final Map<String, bool> _facilities = {
     for (final f in _facilityIcons.keys)
       f: ((widget.hostel['facilities'] as List?) ?? const []).contains(f),
   };
 
-  late final List<String> _photos =
-  List<String>.from(widget.hostel['photos'] as List? ?? const []);
+  late final List<String> _photos = List<String>.from(
+    widget.hostel['photos'] as List? ?? const [],
+  );
 
   @override
   void dispose() {
@@ -63,12 +79,89 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
     super.dispose();
   }
 
+  // ── Photo picking & upload ─────────────────────────────────────────
+
+  Future<void> _pickAndUploadPhoto() async {
+    final source = await _pickSource();
+    if (source == null) return;
+
+    final XFile? picked = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 1600,
+    );
+    if (picked == null) return;
+
+    final file = File(picked.path);
+    final placeholder = 'uploading-${DateTime.now().millisecondsSinceEpoch}';
+
+    setState(() {
+      _photos.add(placeholder);
+      _uploadingPhotos.add(placeholder);
+    });
+
+    try {
+      final url = await _cloudinaryService.uploadImage(file);
+      if (!mounted) return;
+      setState(() {
+        final idx = _photos.indexOf(placeholder);
+        if (idx != -1) _photos[idx] = url;
+        _uploadingPhotos.remove(placeholder);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _photos.remove(placeholder);
+        _uploadingPhotos.remove(placeholder);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
+  }
+
+  Future<ImageSource?> _pickSource() async {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: const Color(0xFFF3E6D5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined,
+                  color: maroon),
+              title: const Text('Choose from Gallery',
+                  style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: maroon),
+              title: const Text('Take Photo',
+                  style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close, color: maroon),
+              title: const Text('Cancel', style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Save ───────────────────────────────────────────────────────────
+
   void _handleSave() {
     if (!_formKey.currentState!.validate()) return;
 
-    // Carry over everything this screen doesn't edit (rooms, active status,
-    // and any other keys already on the hostel) and only overwrite the
-    // fields collected here.
     final selectedFacilities = _facilities.entries
         .where((e) => e.value)
         .map((e) => e.key)
@@ -138,10 +231,13 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                         margin: const EdgeInsets.only(right: 8),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: selected ? maroon : maroon.withValues(alpha: 0.08),
+                          color:
+                          selected ? maroon : maroon.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: selected ? maroon : maroon.withValues(alpha: 0.25),
+                            color: selected
+                                ? maroon
+                                : maroon.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Text(
@@ -181,7 +277,8 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
               const SizedBox(height: 6),
               Text(
                 'Select all that apply',
-                style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
+                style:
+                TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
               ),
               const SizedBox(height: 16),
               GridView.count(
@@ -194,21 +291,28 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                 children: _facilities.keys.map((facility) {
                   final selected = _facilities[facility]!;
                   return GestureDetector(
-                    onTap: () => setState(() => _facilities[facility] = !selected),
+                    onTap: () =>
+                        setState(() => _facilities[facility] = !selected),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: selected ? maroon : maroon.withValues(alpha: 0.07),
+                        color:
+                        selected ? maroon : maroon.withValues(alpha: 0.07),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: selected ? maroon : maroon.withValues(alpha: 0.2),
+                          color: selected
+                              ? maroon
+                              : maroon.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _facilityIcons[facility] ?? Icons.check_circle_outline,
-                            color: selected ? Colors.white : maroon.withValues(alpha: 0.6),
+                            _facilityIcons[facility] ??
+                                Icons.check_circle_outline,
+                            color: selected
+                                ? Colors.white
+                                : maroon.withValues(alpha: 0.6),
                             size: 26,
                           ),
                           const SizedBox(height: 6),
@@ -218,7 +322,9 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: selected ? Colors.white : maroon.withValues(alpha: 0.7),
+                              color: selected
+                                  ? Colors.white
+                                  : maroon.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
@@ -249,7 +355,8 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
               ),
               const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: maroon.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(12),
@@ -273,7 +380,9 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                           ),
                           Text(
                             'Allow seekers to message you directly',
-                            style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: maroon.withValues(alpha: 0.6)),
                           ),
                         ],
                       ),
@@ -292,7 +401,8 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
               const SizedBox(height: 6),
               Text(
                 'Add as many photos as you like',
-                style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
+                style:
+                TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
               ),
               const SizedBox(height: 14),
               GridView.count(
@@ -304,27 +414,71 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                 children: [
                   ..._photos.asMap().entries.map((entry) {
                     final i = entry.key;
+                    final url = entry.value;
+                    final isUploading = _uploadingPhotos.contains(url);
                     return Stack(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: isUploading
+                              ? Container(
                             color: maroon.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor:
+                                AlwaysStoppedAnimation(maroon),
+                              ),
+                            ),
+                          )
+                              : Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder:
+                                (context, child, progress) {
+                              if (progress == null) return child;
+                              return Container(
+                                color: maroon.withValues(alpha: 0.05),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                      AlwaysStoppedAnimation(
+                                          maroon),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder:
+                                (context, error, stack) => Container(
+                              color: maroon.withValues(alpha: 0.1),
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: maroon.withValues(alpha: 0.4),
+                              ),
+                            ),
                           ),
-                          child: const Icon(Icons.image, color: maroon),
                         ),
                         Positioned(
                           top: 2,
                           right: 2,
                           child: GestureDetector(
-                            onTap: () => setState(() => _photos.removeAt(i)),
+                            onTap: () =>
+                                setState(() => _photos.removeAt(i)),
                             child: Container(
-                              padding: const EdgeInsets.all(2),
+                              padding: const EdgeInsets.all(3),
                               decoration: const BoxDecoration(
                                 color: maroon,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.close, color: Colors.white, size: 14),
+                              child: const Icon(Icons.close,
+                                  color: Colors.white, size: 14),
                             ),
                           ),
                         ),
@@ -332,15 +486,13 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                     );
                   }),
                   GestureDetector(
-                    onTap: () {
-                      // TODO: integrate image_picker
-                      setState(() => _photos.add('placeholder'));
-                    },
+                    onTap: _pickAndUploadPhoto,
                     child: Container(
                       decoration: BoxDecoration(
                         color: maroon.withValues(alpha: 0.07),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: maroon.withValues(alpha: 0.25)),
+                        border:
+                        Border.all(color: maroon.withValues(alpha: 0.25)),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -350,7 +502,9 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Add',
-                            style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: maroon.withValues(alpha: 0.6)),
                           ),
                         ],
                       ),
@@ -366,12 +520,16 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: maroon,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _handleSave,
                   child: const Text(
                     'Save Changes',
-                    style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -384,9 +542,7 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
   }
 }
 
-// â”€â”€ Shared small widgets (kept local to this file; add_hostel.dart has its
-// own private copies, and Dart privacy is per-file so they can't be shared
-// directly without extracting a common widgets file) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Shared small widgets ─────────────────────────────────────────────
 Widget _sectionTitle(String title, Color fg) => Text(
   title,
   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: fg),
@@ -394,7 +550,10 @@ Widget _sectionTitle(String title, Color fg) => Text(
 
 Widget _sectionLabel(String label, Color fg) => Text(
   label,
-  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: fg.withValues(alpha: 0.8)),
+  style: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      color: fg.withValues(alpha: 0.8)),
 );
 
 Widget _inputField({
@@ -423,18 +582,25 @@ Widget _inputField({
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF800020).withValues(alpha: 0.6), size: 20),
-        labelStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.7), fontSize: 13),
-        hintStyle: TextStyle(color: const Color(0xFF800020).withValues(alpha: 0.35), fontSize: 13),
+        prefixIcon: Icon(icon,
+            color: const Color(0xFF800020).withValues(alpha: 0.6), size: 20),
+        labelStyle: TextStyle(
+            color: const Color(0xFF800020).withValues(alpha: 0.7),
+            fontSize: 13),
+        hintStyle: TextStyle(
+            color: const Color(0xFF800020).withValues(alpha: 0.35),
+            fontSize: 13),
         filled: true,
         fillColor: const Color(0xFF800020).withValues(alpha: 0.06),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
+          borderSide: BorderSide(
+              color: const Color(0xFF800020).withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: const Color(0xFF800020).withValues(alpha: 0.2)),
+          borderSide: BorderSide(
+              color: const Color(0xFF800020).withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
