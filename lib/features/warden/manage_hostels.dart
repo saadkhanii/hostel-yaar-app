@@ -181,20 +181,19 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   // ── Manage rooms (unchanged UI, no backend writes yet) ────────────────────
   Future<void> _openRoomManagement(int index) async {
     final hostel = _hostels[index];
-    final updatedRooms = await Navigator.push<List<Map<String, dynamic>>>(
+    await Navigator.push<List<Map<String, dynamic>>>(
       context,
       MaterialPageRoute(
         builder: (_) => HostelRoomsScreen(
+          hostelId: hostel['id'] as String,
           hostelName: hostel['name'] as String,
           rooms: (hostel['rooms'] as List).cast<Map<String, dynamic>>(),
         ),
       ),
     );
-    if (updatedRooms != null) {
-      setState(() => hostel['rooms'] = updatedRooms);
-      // TODO: persist room changes to the backend.
-      // Until then, edits here are local-only and will be lost on reload.
-    }
+    // Rooms are persisted server-side, so just refresh the whole hostel
+    // list to pick up any changes (room count, vacancy, price, etc.).
+    await _loadHostels();
   }
 
   @override
