@@ -47,7 +47,7 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
   // start every facility unselected.
   late final Map<String, bool> _facilities = {
     for (final f in _facilityIcons.keys)
-      f: ((widget.hostel['facilities'] as Map?)?[f] as bool?) ?? false,
+      f: ((widget.hostel['facilities'] as List?) ?? const []).contains(f),
   };
 
   late final List<String> _photos =
@@ -69,12 +69,17 @@ class _EditHostelScreenState extends State<EditHostelScreen> {
     // Carry over everything this screen doesn't edit (rooms, active status,
     // and any other keys already on the hostel) and only overwrite the
     // fields collected here.
+    final selectedFacilities = _facilities.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toList();
+
     final updated = Map<String, dynamic>.from(widget.hostel)
       ..['name'] = _nameCtrl.text.trim()
       ..['type'] = _selectedType
       ..['city'] = _cityCtrl.text.trim()
       ..['address'] = _addressCtrl.text.trim()
-      ..['facilities'] = _facilities
+      ..['facilities'] = selectedFacilities
       ..['phone'] = _phoneCtrl.text.trim()
       ..['whatsapp'] = _whatsappCtrl.text.trim()
       ..['inAppChat'] = _inAppChat

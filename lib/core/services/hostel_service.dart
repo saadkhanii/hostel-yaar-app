@@ -91,18 +91,18 @@ class HostelService {
   }
 
   Future<Map<String, dynamic>> updateHostel(
-      String hostelId, {
-        String? name,
-        String? city,
-        String? address,
-        String? type,
-        List<String>? facilities,
-        List<String>? photos,
-        String? phone,
-        String? whatsapp,
-        bool? inAppChat,
-        bool? active,
-      }) async {
+    String hostelId, {
+    String? name,
+    String? city,
+    String? address,
+    String? type,
+    List<String>? facilities,
+    List<String>? photos,
+    String? phone,
+    String? whatsapp,
+    bool? inAppChat,
+    bool? active,
+  }) async {
     try {
       final body = <String, dynamic>{
         if (name != null) 'name': name,
@@ -137,9 +137,9 @@ class HostelService {
   // ─────────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> addRoom(
-      String hostelId,
-      Map<String, dynamic> room,
-      ) async {
+    String hostelId,
+    Map<String, dynamic> room,
+  ) async {
     try {
       final response = await _dio.post(
         '/hostels/$hostelId/rooms',
@@ -152,10 +152,10 @@ class HostelService {
   }
 
   Future<Map<String, dynamic>> updateRoom(
-      String hostelId,
-      String roomId,
-      Map<String, dynamic> updates,
-      ) async {
+    String hostelId,
+    String roomId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
       final response = await _dio.put(
         '/hostels/$hostelId/rooms/$roomId',
@@ -179,23 +179,15 @@ class HostelService {
   // Translation: backend (snake_case) <-> Flutter (camelCase)
   // ─────────────────────────────────────────────────────────────────
 
-  /// Convert a Flutter-shaped room map into the backend's snake_case JSON.
-  ///
-  /// When [partial] is true (for updates), only keys actually present in
-  /// the input map are included — this lets PUT be a true partial update.
   Map<String, dynamic> _roomToBackend(
-      Map<String, dynamic> room, {
-        bool partial = false,
-      }) {
+    Map<String, dynamic> room, {
+    bool partial = false,
+  }) {
     final out = <String, dynamic>{};
 
     void copy(String dartKey, String jsonKey) {
       if (room.containsKey(dartKey)) {
         out[jsonKey] = room[dartKey];
-      } else if (!partial) {
-        // For full creates, pass through null so Pydantic uses defaults.
-        // (Pydantic's Field(default=...) applies when the key is absent;
-        // sending null where a value is required would fail validation.)
       }
     }
 
@@ -209,17 +201,15 @@ class HostelService {
     copy('vacant', 'vacant');
     copy('availabilityDates', 'availability_dates');
 
-    // Carried-over keys that don't exist on the backend are silently dropped.
     return out;
   }
 
   /// Convert a backend hostel JSON object into the Flutter shape.
   ///
-  /// The Flutter side keeps using camelCase everywhere, but the backend
-  /// speaks snake_case — this normalizes so existing screens don't need
-  /// to know about the backend's naming.
+  /// Facilities stay a `List<String>` — this matches the backend shape
+  /// and is what display screens (list, detail) want. The Edit screen
+  /// converts List <-> Map internally.
   Map<String, dynamic> _hostelFromBackend(Map<String, dynamic> raw) {
-    final facilitiesList = (raw['facilities'] as List?)?.cast<String>() ?? [];
     final rawRooms = (raw['rooms'] as List?) ?? const [];
 
     return {
@@ -231,9 +221,7 @@ class HostelService {
       'type': raw['type'],
       'latitude': raw['latitude'],
       'longitude': raw['longitude'],
-      'facilities': {
-        for (final f in facilitiesList) f: true,
-      },
+      'facilities': (raw['facilities'] as List?)?.cast<String>() ?? const [],
       'photos': (raw['photos'] as List?)?.cast<String>() ?? const [],
       'phone': raw['phone'],
       'whatsapp': raw['whatsapp'],
@@ -247,14 +235,9 @@ class HostelService {
       'rooms': rawRooms
           .map((r) => _roomFromBackend(r as Map<String, dynamic>))
           .toList(),
-      // Placeholder until reviews exist.
-      'reviewCount': 0,
-      'rating': 0.0,
     };
   }
 
-  /// Convert a backend room JSON object into the Flutter shape used by
-  /// HostelRoomsScreen, HostelDetailScreen, and the Add Hostel wizard.
   Map<String, dynamic> _roomFromBackend(Map<String, dynamic> raw) {
     return {
       'id': raw['id'],
@@ -268,8 +251,9 @@ class HostelService {
       'advance': raw['advance'],
       'vacant': raw['vacant'],
       'availabilityDates': (raw['availability_dates'] as List?) ?? const [],
-      'availabilitySameDate':
-      _sameDate((raw['availability_dates'] as List?) ?? const []),
+      'availabilitySameDate': _sameDate(
+        (raw['availability_dates'] as List?) ?? const [],
+      ),
       'upcomingVacancies': <Map<String, dynamic>>[],
     };
   }

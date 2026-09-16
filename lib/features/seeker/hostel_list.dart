@@ -639,8 +639,7 @@ class _HostelResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final facilities = ((hostel['facilities'] as Map?)?.keys ?? const [])
-        .cast<String>();
+    final facilities = (hostel['facilities'] as List?)?.cast<String>() ?? const [];
 
     return InkWell(
       onTap: onTap,

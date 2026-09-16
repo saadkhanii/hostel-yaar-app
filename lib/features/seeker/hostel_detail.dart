@@ -1,75 +1,50 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 
-// ── Hostel Detail Screen ───────────────────────────────────────────────────
-// Shown when a seeker taps a hostel card/tile on the dashboard. Takes a
-// loose `Map<String, dynamic>` for now (matching the shape used across the
-// other screens) — swap this for a shared `Hostel`/`Room` model once one
-// exists, at which point `hostel` becomes a typed object instead of a map.
+import '../../core/services/hostel_service.dart';
+
+// ── Hostel Detail Screen ───────────────────────────────────────────────
+// Shown when a seeker taps a hostel card on the list. Receives a hostel
+// map via router arguments (already in Flutter camelCase shape from
+// HostelService). On open, re-fetches by id so the seeker always sees
+// fresh data — the passed-in map might be stale.
 //
-// Expected shape of `hostel`:
+// Expected shape of the `hostel` map (matches HostelService output):
 // {
-//   'name': String, 'city': String, 'address': String, 'type': String,
-//   'rating': double, 'reviewCount': int,
-//   'photos': List<String>,              // network URLs; empty -> placeholder
-//   'facilities': List<String>,          // selected facility names
-//   'phone': String, 'whatsapp': String, 'inAppChat': bool,
-//   'rooms': List<Map<String, dynamic>>  // same room shape as AddHostelScreen:
-//     { 'number', 'bookingType' ('Room'/'Seat'), 'roomType' (int seater),
-//       'availableSeats', 'attachedWashroom', 'price', 'advance', 'vacant' }
+//   'id', 'wardenId', 'name', 'city', 'address', 'type',
+//   'latitude', 'longitude',
+//   'facilities': List<String>,
+//   'photos': List<String>,
+//   'phone', 'whatsapp', 'inAppChat', 'active',
+//   'startingPrice', 'hasVacancy', 'roomCount',
+//   'createdAt', 'updatedAt',
+//   'rooms': List<Map<String, dynamic>>  // camelCase, from _roomFromBackend
 // }
 class HostelDetailScreen extends StatefulWidget {
   final Map<String, dynamic> hostel;
 
   const HostelDetailScreen({super.key, required this.hostel});
 
-  // Placeholder data for wiring this screen up from dashboard cards before
-  // real hostel data flows through a shared model / Firestore. Replace call
-  // sites with the tapped hostel's actual data once that exists.
-  static Map<String, dynamic> get sampleHostel => {
-    'name': 'Green View Hostel',
-    'city': 'Gulberg, Lahore',
-    'address': '12-B, Main Boulevard, Gulberg III, Lahore',
+  /// Fallback shape used when a caller navigates without arguments.
+  static Map<String, dynamic> get sampleHostel => const {
+    'id': '',
+    'wardenId': '',
+    'name': 'Hostel',
+    'city': '',
+    'address': '',
     'type': 'Boys',
-    'rating': 4.5,
-    'reviewCount': 32,
+    'latitude': null,
+    'longitude': null,
+    'facilities': <String>[],
     'photos': <String>[],
-    'facilities': ['WiFi', 'Meals', 'Laundry', 'Generator', 'CCTV', 'Parking'],
-    'phone': '+92 300 1234567',
-    'whatsapp': '+92 300 1234567',
-    'inAppChat': true,
-    'rooms': [
-      {
-        'number': '101',
-        'bookingType': 'Room',
-        'roomType': 2,
-        'availableSeats': 2,
-        'attachedWashroom': true,
-        'price': 16000,
-        'advance': 16000,
-        'vacant': true,
-      },
-      {
-        'number': '102',
-        'bookingType': 'Room',
-        'roomType': 3,
-        'availableSeats': 3,
-        'attachedWashroom': false,
-        'price': 12000,
-        'advance': 12000,
-        'vacant': false,
-      },
-      {
-        'number': '201',
-        'bookingType': 'Seat',
-        'roomType': 4,
-        'availableSeats': 2,
-        'attachedWashroom': true,
-        'price': 8000,
-        'advance': 8000,
-        'vacant': true,
-      },
-    ],
+    'phone': '',
+    'whatsapp': '',
+    'inAppChat': false,
+    'active': true,
+    'startingPrice': 0,
+    'hasVacancy': false,
+    'roomCount': 0,
+    'rooms': <Map<String, dynamic>>[],
   };
 
   @override
@@ -79,15 +54,12 @@ class HostelDetailScreen extends StatefulWidget {
 class _HostelDetailScreenState extends State<HostelDetailScreen> {
   static const maroon = Color(0xFF800020);
 
+  final _hostelService = HostelService();
   final PageController _photoController = PageController();
   int _currentPhoto = 0;
 
-  // Tracks which rooms already have a pending request from this seeker in
-  // this session, so the button can flip to "Requested" and can't be
-  // re-tapped. Keyed by room number (unique within a hostel's room list).
-  // TODO: back this with the real booking-request record (Firestore) once
-  // that flow exists, so it persists across sessions/devices instead of
-  // resetting whenever this screen is rebuilt.
+  late Map<String, dynamic> _hostel;
+  bool _isRefreshing = false;
   final Set<String> _requestedRooms = {};
 
   static const Map<String, IconData> _facilityIcons = {
@@ -103,23 +75,44 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _hostel = widget.hostel;
+    _refreshFromBackend();
+  }
+
+  @override
   void dispose() {
     _photoController.dispose();
     super.dispose();
   }
 
+  Future<void> _refreshFromBackend() async {
+    final id = _hostel['id'] as String?;
+    if (id == null || id.isEmpty) return;
+
+    setState(() => _isRefreshing = true);
+    try {
+      final fresh = await _hostelService.getHostel(id);
+      if (!mounted) return;
+      setState(() {
+        _hostel = fresh;
+        _isRefreshing = false;
+      });
+    } catch (_) {
+      // Silent — the passed-in data is already displayed. A failed
+      // background refresh shouldn't break the screen.
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
   List<Map<String, dynamic>> get _rooms =>
-      (widget.hostel['rooms'] as List).cast<Map<String, dynamic>>();
+      ((_hostel['rooms'] as List?) ?? const []).cast<Map<String, dynamic>>();
 
   bool _isRoomAvailable(Map<String, dynamic> room) {
     return room['bookingType'] == 'Room'
         ? room['vacant'] == true
-        : (room['availableSeats'] as int? ?? 0) > 0;
-  }
-
-  int? get _startingPrice {
-    if (_rooms.isEmpty) return null;
-    return _rooms.map((r) => r['price'] as int).reduce((a, b) => a < b ? a : b);
+        : ((room['availableSeats'] as int?) ?? 0) > 0;
   }
 
   int get _availableRoomCount => _rooms.where(_isRoomAvailable).length;
@@ -132,6 +125,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   void _requestBooking(Map<String, dynamic> room) {
+    // TODO (Phase 4): POST to /bookings once the requests flow exists.
+    // For now, confirm intent locally so the user gets feedback.
     DateTime? moveInDate;
 
     showDialog(
@@ -152,21 +147,23 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
             children: [
               Text(
                 'Send a booking request for Room ${room['number']} at '
-                    '${widget.hostel['name']}? The warden will confirm availability '
+                    '${_hostel['name']}? The warden will confirm availability '
                     'before you pay any advance.',
                 style: TextStyle(color: maroon.withValues(alpha: 0.75)),
               ),
               const SizedBox(height: 16),
               Text(
                 'When do you want to move in?',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
+                style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
               ),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: moveInDate ?? DateTime.now().add(const Duration(days: 1)),
+                    initialDate:
+                    moveInDate ?? DateTime.now().add(const Duration(days: 1)),
                     firstDate: DateTime.now(),
                     lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
@@ -175,7 +172,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: maroon.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
@@ -183,12 +181,18 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, color: maroon, size: 18),
+                      const Icon(Icons.calendar_today_outlined,
+                          color: maroon, size: 18),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          moveInDate == null ? 'Select a date' : _formatDate(moveInDate!),
-                          style: const TextStyle(fontSize: 13, color: maroon, fontWeight: FontWeight.w600),
+                          moveInDate == null
+                              ? 'Select a date'
+                              : _formatDate(moveInDate!),
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: maroon,
+                              fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -200,28 +204,27 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+              child: Text('Cancel',
+                  style: TextStyle(color: maroon.withValues(alpha: 0.6))),
             ),
             TextButton(
               onPressed: moveInDate == null
                   ? null
                   : () {
-                // TODO: create a real booking-request record (Firestore) once
-                // the request/approval flow exists — this only confirms UI
-                // intent and remembers it locally so the button can't be
-                // re-tapped.
-                setState(() => _requestedRooms.add(room['number'] as String));
+                setState(() =>
+                    _requestedRooms.add(room['number'] as String));
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Request sent for Room ${room['number']} — move-in ${_formatDate(moveInDate!)}',
+                      'Booking requests are coming soon. Your intent has been noted for Room ${room['number']}.',
                     ),
                   ),
                 );
               },
               style: TextButton.styleFrom(foregroundColor: maroon),
-              child: const Text('Send Request', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text('Send Request',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
         ),
@@ -230,8 +233,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   }
 
   void _contactAction(String label) {
-    // TODO: wire to url_launcher (tel:/https://wa.me/) and in-app chat once
-    // those integrations exist.
+    // TODO: wire to url_launcher (tel:/https://wa.me/) once we add it.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$label — coming soon')),
     );
@@ -242,9 +244,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
-    final hostel = widget.hostel;
-    final photos = (hostel['photos'] as List).cast<String>();
-    final facilities = (hostel['facilities'] as List).cast<String>();
+    final hostel = _hostel;
+    final photos = (hostel['photos'] as List?)?.cast<String>() ?? const [];
+    final facilities =
+        (hostel['facilities'] as List?)?.cast<String>() ?? const [];
 
     return Scaffold(
       backgroundColor: bg,
@@ -263,9 +266,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   : Icons.favorite_border,
               color: maroon,
             ),
-            onPressed: () => setState(() => SavedHostelsStore.instance.toggle(hostel)),
+            onPressed: () =>
+                setState(() => SavedHostelsStore.instance.toggle(hostel)),
           ),
         ],
+        bottom: _isRefreshing
+            ? const PreferredSize(
+          preferredSize: Size.fromHeight(2),
+          child: LinearProgressIndicator(
+            minHeight: 2,
+            backgroundColor: Colors.transparent,
+            valueColor: AlwaysStoppedAnimation(maroon),
+          ),
+        )
+            : null,
       ),
       body: SafeArea(
         child: Column(
@@ -277,7 +291,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   children: [
                     _buildPhotoCarousel(photos),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -293,20 +308,31 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                           const SizedBox(height: 6),
                           Text(
                             'Rent and advance shown are per room, or per seat for shared listings.',
-                            style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: fg.withValues(alpha: 0.5)),
                           ),
                           const SizedBox(height: 12),
-                          ..._rooms.map(
-                                (room) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _DetailRoomCard(
-                                room: room,
-                                available: _isRoomAvailable(room),
-                                requested: _requestedRooms.contains(room['number']),
-                                onRequest: () => _requestBooking(room),
+                          if (_rooms.isEmpty)
+                            Text(
+                              'No rooms listed yet.',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: fg.withValues(alpha: 0.5)),
+                            )
+                          else
+                            ..._rooms.map(
+                                  (room) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _DetailRoomCard(
+                                  room: room,
+                                  available: _isRoomAvailable(room),
+                                  requested:
+                                  _requestedRooms.contains(room['number']),
+                                  onRequest: () => _requestBooking(room),
+                                ),
                               ),
                             ),
-                          ),
                           const SizedBox(height: 24),
                           _sectionTitle('Location', fg),
                           const SizedBox(height: 10),
@@ -331,7 +357,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         height: 220,
         width: double.infinity,
         color: maroon.withValues(alpha: 0.1),
-        child: Icon(Icons.home_work_outlined, size: 56, color: maroon.withValues(alpha: 0.35)),
+        child: Icon(Icons.home_work_outlined,
+            size: 56, color: maroon.withValues(alpha: 0.35)),
       );
     }
     return SizedBox(
@@ -348,7 +375,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stack) => Container(
                 color: maroon.withValues(alpha: 0.1),
-                child: Icon(Icons.broken_image_outlined, color: maroon.withValues(alpha: 0.35)),
+                child: Icon(Icons.broken_image_outlined,
+                    color: maroon.withValues(alpha: 0.35)),
               ),
             ),
           ),
@@ -367,7 +395,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     width: active ? 18 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color:
+                      active ? Colors.white : Colors.white.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   );
@@ -387,8 +416,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           children: [
             Expanded(
               child: Text(
-                hostel['name'] as String,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: fg),
+                hostel['name'] as String? ?? '',
+                style: TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.bold, color: fg),
               ),
             ),
             Container(
@@ -398,8 +428,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                hostel['type'] as String,
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: maroon.withValues(alpha: 0.8)),
+                hostel['type'] as String? ?? '',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: maroon.withValues(alpha: 0.8)),
               ),
             ),
           ],
@@ -407,29 +440,15 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(Icons.location_on_outlined, size: 14, color: fg.withValues(alpha: 0.55)),
+            Icon(Icons.location_on_outlined,
+                size: 14, color: fg.withValues(alpha: 0.55)),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
-                hostel['city'] as String,
-                style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.55)),
+                hostel['city'] as String? ?? '',
+                style:
+                TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.55)),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            const Icon(Icons.star, size: 16, color: maroon),
-            const SizedBox(width: 4),
-            Text(
-              '${hostel['rating']}',
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: maroon),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '(${hostel['reviewCount']} reviews)',
-              style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
             ),
           ],
         ),
@@ -438,7 +457,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   }
 
   Widget _buildQuickStats() {
-    final starting = _startingPrice;
+    final starting = _hostel['startingPrice'] as int? ?? 0;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -451,7 +470,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           Expanded(
             child: _quickStat(
               icon: Icons.payments_outlined,
-              value: starting != null ? 'Rs. $starting' : '—',
+              value: starting > 0 ? 'Rs. $starting' : '—',
               label: 'Starting from',
             ),
           ),
@@ -468,7 +487,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     );
   }
 
-  Widget _quickStat({required IconData icon, required String value, required String label}) {
+  Widget _quickStat({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
     return Row(
       children: [
         Icon(icon, color: maroon, size: 20),
@@ -476,8 +499,14 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: maroon)),
-            Text(label, style: TextStyle(fontSize: 10, color: maroon.withValues(alpha: 0.6))),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: maroon)),
+            Text(label,
+                style: TextStyle(
+                    fontSize: 10, color: maroon.withValues(alpha: 0.6))),
           ],
         ),
       ],
@@ -505,9 +534,14 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_facilityIcons[f] ?? Icons.check_circle_outline, size: 15, color: maroon),
+              Icon(_facilityIcons[f] ?? Icons.check_circle_outline,
+                  size: 15, color: maroon),
               const SizedBox(width: 6),
-              Text(f, style: const TextStyle(fontSize: 12, color: maroon, fontWeight: FontWeight.w500)),
+              Text(f,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: maroon,
+                      fontWeight: FontWeight.w500)),
             ],
           ),
         );
@@ -527,8 +561,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            hostel['address'] as String,
-            style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.75)),
+            hostel['address'] as String? ?? '',
+            style:
+            TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.75)),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -538,10 +573,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: maroon),
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               icon: const Icon(Icons.map_outlined, size: 16, color: maroon),
-              label: const Text('View on Map', style: TextStyle(color: maroon, fontSize: 13)),
+              label: const Text('View on Map',
+                  style: TextStyle(color: maroon, fontSize: 13)),
             ),
           ),
         ],
@@ -551,7 +588,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   Widget _buildContactBar(Map<String, dynamic> hostel) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasWhatsapp = (hostel['whatsapp'] as String? ?? '').isNotEmpty;
+    final hasWhatsapp = ((hostel['whatsapp'] as String?) ?? '').isNotEmpty;
     final hasChat = hostel['inAppChat'] == true;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -561,14 +598,17 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       ),
       child: Row(
         children: [
-          _contactIconButton(Icons.call_outlined, 'Call', () => _contactAction('Call')),
+          _contactIconButton(
+              Icons.call_outlined, 'Call', () => _contactAction('Call')),
           if (hasWhatsapp) ...[
             const SizedBox(width: 10),
-            _contactIconButton(Icons.chat_outlined, 'WhatsApp', () => _contactAction('WhatsApp')),
+            _contactIconButton(Icons.chat_outlined, 'WhatsApp',
+                    () => _contactAction('WhatsApp')),
           ],
           if (hasChat) ...[
             const SizedBox(width: 10),
-            _contactIconButton(Icons.forum_outlined, 'Chat', () => _contactAction('In-app chat')),
+            _contactIconButton(Icons.forum_outlined, 'Chat',
+                    () => _contactAction('In-app chat')),
           ],
         ],
       ),
@@ -582,10 +622,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: maroon.withValues(alpha: 0.4)),
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         icon: Icon(icon, size: 16, color: maroon),
-        label: Text(label, style: const TextStyle(color: maroon, fontSize: 12)),
+        label:
+        Text(label, style: const TextStyle(color: maroon, fontSize: 12)),
       ),
     );
   }
@@ -596,7 +638,7 @@ Widget _sectionTitle(String title, Color fg) => Text(
   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg),
 );
 
-// ── Room Card (seeker-facing, read-only + request action) ─────────────────
+// ── Room Card (seeker-facing, read-only + request action) ──────────────
 class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
@@ -615,8 +657,10 @@ class _DetailRoomCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSeatRoom = room['bookingType'] == 'Seat';
-    final price = room['price'] as int;
-    final advance = room['advance'] as int;
+    final price = (room['price'] as int?) ?? 0;
+    final advance = (room['advance'] as int?) ?? 0;
+    final seats = (room['availableSeats'] as int?) ?? 0;
+    final type = (room['roomType'] as int?) ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -630,22 +674,27 @@ class _DetailRoomCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.door_front_door_outlined, color: maroon, size: 18),
+              const Icon(Icons.door_front_door_outlined,
+                  color: maroon, size: 18),
               const SizedBox(width: 8),
               Text(
                 'Room ${room['number']}',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: maroon),
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.bold, color: maroon),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: available ? Colors.green.withValues(alpha: 0.15) : maroon.withValues(alpha: 0.12),
+                  color: available
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : maroon.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   available
-                      ? (isSeatRoom ? '${room['availableSeats']} seats open' : 'Vacant')
+                      ? (isSeatRoom ? '$seats seats open' : 'Vacant')
                       : (isSeatRoom ? 'Full' : 'Filled'),
                   style: TextStyle(
                     fontSize: 10,
@@ -658,10 +707,11 @@ class _DetailRoomCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${room['roomType']} Seater • '
+            '$type Seater • '
                 '${isSeatRoom ? 'Per Seat' : 'Complete Room'} • '
-                '${room['attachedWashroom'] ? 'Attached WR' : 'Shared WR'}',
-            style: TextStyle(fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+                '${room['attachedWashroom'] == true ? 'Attached WR' : 'Shared WR'}',
+            style: TextStyle(
+                fontSize: 12, color: maroon.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           Row(
@@ -672,11 +722,15 @@ class _DetailRoomCard extends StatelessWidget {
                   children: [
                     Text(
                       'Rs. $price/mo',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: maroon),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: maroon),
                     ),
                     Text(
                       'Advance: Rs. $advance',
-                      style: TextStyle(fontSize: 11, color: maroon.withValues(alpha: 0.6)),
+                      style: TextStyle(
+                          fontSize: 11, color: maroon.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
@@ -684,22 +738,28 @@ class _DetailRoomCard extends StatelessWidget {
               ElevatedButton(
                 onPressed: (available && !requested) ? onRequest : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: requested ? Colors.green.withValues(alpha: 0.15) : maroon,
+                  backgroundColor:
+                  requested ? Colors.green.withValues(alpha: 0.15) : maroon,
                   disabledBackgroundColor: requested
                       ? Colors.green.withValues(alpha: 0.15)
                       : maroon.withValues(alpha: 0.25),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (requested) ...[
-                      Icon(Icons.check_circle, size: 14, color: Colors.green[800]),
+                      Icon(Icons.check_circle,
+                          size: 14, color: Colors.green[800]),
                       const SizedBox(width: 4),
                     ],
                     Text(
-                      requested ? 'Requested' : (available ? 'Request to Book' : 'Unavailable'),
+                      requested
+                          ? 'Requested'
+                          : (available ? 'Request to Book' : 'Unavailable'),
                       style: TextStyle(
                         color: requested ? Colors.green[800] : Colors.white,
                         fontSize: 12,

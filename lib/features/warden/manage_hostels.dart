@@ -155,10 +155,7 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
           phone: updated['phone'] as String?,
           whatsapp: updated['whatsapp'] as String?,
           inAppChat: updated['inAppChat'] as bool?,
-          facilities: (updated['facilities'] as Map?)?.entries
-              .where((e) => e.value == true)
-              .map((e) => e.key as String)
-              .toList(),
+          facilities: (updated['facilities'] as List?)?.cast<String>(),
           photos: (updated['photos'] as List?)?.cast<String>(),
         );
       } catch (e) {
