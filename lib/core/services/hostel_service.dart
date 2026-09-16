@@ -167,6 +167,46 @@ class HostelService {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────
+  // Saved Hostels
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Current seeker's saved hostels, most recently saved first.
+  /// Each item is `{ savedAt: String, hostel: Map }`.
+  Future<List<Map<String, dynamic>>> listSavedHostels() async {
+    try {
+      final response = await _dio.get('/saved-hostels');
+      return (response.data as List).map((item) {
+        final m = item as Map<String, dynamic>;
+        return {
+          'savedAt': m['saved_at'],
+          'hostel': _hostelFromBackend(
+              m['hostel'] as Map<String, dynamic>),
+        };
+      }).toList();
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
+  /// Save a hostel for the current seeker. Idempotent.
+  Future<void> saveHostel(String hostelId) async {
+    try {
+      await _dio.post('/saved-hostels/$hostelId');
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
+  /// Unsave a hostel for the current seeker. Idempotent.
+  Future<void> unsaveHostel(String hostelId) async {
+    try {
+      await _dio.delete('/saved-hostels/$hostelId');
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
   Future<void> deleteRoom(String hostelId, String roomId) async {
     try {
       await _dio.delete('/hostels/$hostelId/rooms/$roomId');

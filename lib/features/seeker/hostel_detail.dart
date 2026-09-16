@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:hostel_yaar/core/data/saved_hostels_store.dart';
 
 import '../../core/services/hostel_service.dart';
 
@@ -87,22 +86,72 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     super.dispose();
   }
 
+  bool _isSaved = false;
+  bool _isTogglingSave = false;
+
   Future<void> _refreshFromBackend() async {
     final id = _hostel['id'] as String?;
     if (id == null || id.isEmpty) return;
 
     setState(() => _isRefreshing = true);
+
+    // Fetch hostel + saved-status in parallel.
     try {
-      final fresh = await _hostelService.getHostel(id);
+      final results = await Future.wait([
+        _hostelService.getHostel(id),
+        _isSavedOnServer(id),
+      ]);
+
       if (!mounted) return;
       setState(() {
-        _hostel = fresh;
+        _hostel = results[0] as Map<String, dynamic>;
+        _isSaved = results[1] as bool;
         _isRefreshing = false;
       });
     } catch (_) {
-      // Silent — the passed-in data is already displayed. A failed
-      // background refresh shouldn't break the screen.
       if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  /// Whether the current seeker has already saved this hostel.
+  Future<bool> _isSavedOnServer(String hostelId) async {
+    try {
+      final saved = await _hostelService.listSavedHostels();
+      return saved.any((s) => (s['hostel'] as Map)['id'] == hostelId);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Toggle save state. Optimistic — flips locally, reverts on failure.
+  Future<void> _toggleSave() async {
+    final id = _hostel['id'] as String?;
+    if (id == null || id.isEmpty || _isTogglingSave) return;
+
+    final previous = _isSaved;
+    setState(() {
+      _isSaved = !_isSaved;
+      _isTogglingSave = true;
+    });
+
+    try {
+      if (_isSaved) {
+        await _hostelService.saveHostel(id);
+      } else {
+        await _hostelService.unsaveHostel(id);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaved = previous);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not update saved list: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isTogglingSave = false);
     }
   }
 
@@ -261,13 +310,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              SavedHostelsStore.instance.isSaved(hostel)
-                  ? Icons.favorite
-                  : Icons.favorite_border,
+              _isSaved ? Icons.favorite : Icons.favorite_border,
               color: maroon,
             ),
-            onPressed: () =>
-                setState(() => SavedHostelsStore.instance.toggle(hostel)),
+            onPressed: _isTogglingSave ? null : _toggleSave,
           ),
         ],
         bottom: _isRefreshing
