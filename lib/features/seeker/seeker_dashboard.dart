@@ -2,6 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
+import '../../core/services/session_manager.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -85,9 +86,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         NavigationService.navigateTo(AppRoutes.savedHostels);
         break;
       case 3:
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Profile — coming soon')));
+        SessionManager.confirmAndLogout(context);
         break;
     }
   }
@@ -134,10 +133,14 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                         ),
                       ],
                     ),
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: maroon.withValues(alpha: 0.15),
-                      child: const Icon(Icons.person, color: maroon, size: 26),
+                    GestureDetector(
+                      onTap: () => SessionManager.confirmAndLogout(context),
+                      child: CircleAvatar(
+                        radius: 24,
+                        backgroundColor: maroon.withValues(alpha: 0.15),
+                        child:
+                        const Icon(Icons.person, color: maroon, size: 26),
+                      ),
                     ),
                   ],
                 ),
