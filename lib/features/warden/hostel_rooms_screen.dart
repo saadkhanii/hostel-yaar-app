@@ -161,6 +161,9 @@ class _HostelRoomsScreenState extends State<HostelRoomsScreen> {
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) {
+          final navigator = Navigator.of(context);
+          final messenger = ScaffoldMessenger.maybeOf(context);
+
           Future<void> submit() async {
             final roomNum = roomNumCtrl.text.trim();
             if (roomNum.isEmpty) {
@@ -250,9 +253,11 @@ class _HostelRoomsScreenState extends State<HostelRoomsScreen> {
                 }
               });
 
-              Navigator.pop(context);
+              if (!mounted) return;
+              navigator.pop();
 
-              ScaffoldMessenger.of(context).showSnackBar(
+              if (!mounted) return;
+              messenger?.showSnackBar(
                 SnackBar(
                   content: Text(
                     existingIndex != null
@@ -702,8 +707,6 @@ class _HostelRoomsScreenState extends State<HostelRoomsScreen> {
     );
   }
 }
-
-String _formatDate(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
 // ── Reusable text field ────────────────────────────────────────────────
 Widget _field({
