@@ -1,10 +1,20 @@
 ﻿import 'package:flutter/material.dart';
+
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
-import '../../core/services/session_manager.dart';
+import '../../shared/widgets/app_drawer.dart';
 
-class WardenDashboard extends StatelessWidget {
+class WardenDashboard extends StatefulWidget {
   const WardenDashboard({super.key});
+
+  @override
+  State<WardenDashboard> createState() => _WardenDashboardState();
+}
+
+class _WardenDashboardState extends State<WardenDashboard> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _openDrawer() => _scaffoldKey.currentState?.openEndDrawer();
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +24,17 @@ class WardenDashboard extends StatelessWidget {
     const maroon = Color(0xFF800020);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: bg,
+      endDrawer: const AppDrawer(),
+      endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Header ───────────────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -45,9 +58,8 @@ class WardenDashboard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   GestureDetector(
-                    onTap: () => SessionManager.confirmAndLogout(context),
+                    onTap: _openDrawer,
                     child: CircleAvatar(
                       radius: 24,
                       backgroundColor: maroon.withValues(alpha: 0.15),
@@ -59,7 +71,7 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // â”€â”€ Stats Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Stats Row ────────────────────────────────────────
               Row(
                 children: [
                   _StatCard(
@@ -90,7 +102,7 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // â”€â”€ Main Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Main Actions ─────────────────────────────────────
               Text(
                 'Manage',
                 style: TextStyle(
@@ -123,7 +135,7 @@ class WardenDashboard extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // â”€â”€ Recent Activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+              // ── Recent Activity ──────────────────────────────────
               Text(
                 'Recent Activity',
                 style: TextStyle(
@@ -136,19 +148,19 @@ class WardenDashboard extends StatelessWidget {
 
               _ActivityTile(
                 title: 'New booking request',
-                subtitle: 'Ali Hassan â€” Boys Hostel Block A',
+                subtitle: 'Ali Hassan — Boys Hostel Block A',
                 time: '2h ago',
                 isDark: isDark,
               ),
               _ActivityTile(
                 title: 'Room marked vacant',
-                subtitle: 'Room 204 â€” Green View Hostel',
+                subtitle: 'Room 204 — Green View Hostel',
                 time: 'Yesterday',
                 isDark: isDark,
               ),
               _ActivityTile(
                 title: 'New review received',
-                subtitle: '4â˜… on Sunrise Boys Hostel',
+                subtitle: '4⭐ on Sunrise Boys Hostel',
                 time: '2 days ago',
                 isDark: isDark,
               ),
@@ -157,9 +169,11 @@ class WardenDashboard extends StatelessWidget {
         ),
       ),
 
-      // â”€â”€ Bottom Nav â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      // ── Bottom Nav ─────────────────────────────────────────────
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
+        backgroundColor: isDark
+            ? const Color(0xFF1D2128)
+            : const Color(0xFFF3E6D5),
         selectedItemColor: maroon,
         unselectedItemColor: maroon.withValues(alpha: 0.4),
         type: BottomNavigationBarType.fixed,
@@ -167,35 +181,44 @@ class WardenDashboard extends StatelessWidget {
         onTap: (index) {
           switch (index) {
             case 0:
-            // Already on the dashboard â€” nothing to do.
               break;
             case 1:
               NavigationService.navigateTo(AppRoutes.manageHostel);
               break;
             case 2:
+              NavigationService.navigateTo(AppRoutes.wardenRequests);
+              break;
+            case 3:
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Alerts — coming soon')),
               );
               break;
-            case 3:
-            // Settings is a stub — until it exists, treat this tab as
-            // the logout entry point.
-              SessionManager.confirmAndLogout(context);
-              break;
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.home_work_outlined), label: 'Hostels'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications_outlined), label: 'Alerts'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_work_outlined),
+            label: 'Hostels',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inbox_outlined),
+            label: 'Requests',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_outlined),
+            label: 'Alerts',
+          ),
         ],
       ),
     );
   }
 }
 
-// â”€â”€ Stat Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Stat Card ─────────────────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -254,7 +277,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Action Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Action Card ───────────────────────────────────────────────────────
 class _ActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -317,7 +340,11 @@ class _ActionCard extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 14, color: maroon.withValues(alpha: 0.4)),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: maroon.withValues(alpha: 0.4),
+            ),
           ],
         ),
       ),
@@ -325,7 +352,7 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-// â”€â”€ Activity Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Activity Tile ─────────────────────────────────────────────────────
 class _ActivityTile extends StatelessWidget {
   final String title;
   final String subtitle;

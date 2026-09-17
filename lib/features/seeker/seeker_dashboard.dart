@@ -2,7 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
-import '../../core/services/session_manager.dart';
+import '../../shared/widgets/app_drawer.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -20,6 +20,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
   final _hostelService = HostelService();
   final _searchCtrl = TextEditingController();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<Map<String, dynamic>> _allHostels = [];
   bool _isLoading = true;
@@ -99,7 +100,10 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: bg,
+      endDrawer: const AppDrawer(),
+      endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
         child: RefreshIndicator(
           color: maroon,
@@ -135,7 +139,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                       ],
                     ),
                     GestureDetector(
-                      onTap: () => SessionManager.confirmAndLogout(context),
+                      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
                       child: CircleAvatar(
                         radius: 24,
                         backgroundColor: maroon.withValues(alpha: 0.15),

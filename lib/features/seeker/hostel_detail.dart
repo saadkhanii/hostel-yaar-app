@@ -340,6 +340,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   isSubmitting = true;
                   errorText = null;
                 });
+                // Capture these BEFORE the await so we don't
+                // touch context across an async gap.
+                final messenger = ScaffoldMessenger.of(this.context);
+                final navigator = Navigator.of(dialogContext);
 
                 try {
                   await BookingService().createRequest(
@@ -350,12 +354,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   );
 
                   if (!mounted) return;
-                  Navigator.pop(dialogContext);
+                  navigator.pop();
 
                   setState(() =>
                       _requestedRooms.add(room['number'] as String));
 
-                  ScaffoldMessenger.of(this.context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         'Request sent for Room ${room['number']}! '
