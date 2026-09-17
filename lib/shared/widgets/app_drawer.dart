@@ -20,6 +20,7 @@ class AppDrawer extends StatefulWidget {
 
 class _AppDrawerState extends State<AppDrawer> {
   static const maroon = Color(0xFF800020);
+  static const maroonDark = Color(0xFF5C0017);
 
   final _authService = AuthService();
 
@@ -49,9 +50,10 @@ class _AppDrawerState extends State<AppDrawer> {
   /// so it appears above everything (including any nested navigators).
   void _openScreen(Widget screen) {
     Navigator.of(context).pop();
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(builder: (_) => screen),
-    );
+    Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(MaterialPageRoute(builder: (_) => screen));
   }
 
   void _openRoute(String route) {
@@ -59,31 +61,72 @@ class _AppDrawerState extends State<AppDrawer> {
     NavigationService.navigateTo(route);
   }
 
+  String get _initials {
+    final trimmed = _fullName.trim();
+    if (trimmed.isEmpty) return '?';
+    final parts = trimmed.split(RegExp(r'\s+'));
+    final first = parts.first.isNotEmpty ? parts.first[0] : '';
+    final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
+    return (first + last).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
+    final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
 
     return Drawer(
       backgroundColor: bg,
-      width: MediaQuery.of(context).size.width * 0.78,
+      width: MediaQuery.of(context).size.width * 0.8,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(left: Radius.circular(20)),
+        borderRadius: BorderRadius.horizontal(left: Radius.circular(28)),
       ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Header ───────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [maroon, maroonDark],
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: maroon.withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: maroon.withValues(alpha: 0.15),
-                    child: const Icon(Icons.person, color: maroon, size: 30),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        width: 2,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      _initials,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -92,37 +135,52 @@ class _AppDrawerState extends State<AppDrawer> {
                       children: [
                         Text(
                           _fullName,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: fg,
+                            color: Colors.white,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           _email,
                           style: TextStyle(
                             fontSize: 12,
-                            color: fg.withValues(alpha: 0.6),
+                            color: Colors.white.withValues(alpha: 0.75),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: maroon.withValues(alpha: 0.1),
+                            color: Colors.white.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
-                            _role == 'warden' ? 'Warden' : 'Hostel Seeker',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: maroon.withValues(alpha: 0.85),
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _role == 'warden'
+                                    ? Icons.shield_outlined
+                                    : Icons.travel_explore_outlined,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                _role == 'warden' ? 'Warden' : 'Hostel Seeker',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -131,42 +189,59 @@ class _AppDrawerState extends State<AppDrawer> {
                 ],
               ),
             ),
-            Divider(height: 1, color: maroon.withValues(alpha: 0.15)),
 
             // ── Items ────────────────────────────────────────────
-            const SizedBox(height: 8),
-            _DrawerItem(
-              icon: Icons.person_outline,
-              label: 'Profile',
-              onTap: () => _openScreen(const ProfileScreen()),
+            const SizedBox(height: 6),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
+                children: [
+                  _DrawerItem(
+                    icon: Icons.person_outline,
+                    label: 'Profile',
+                    cardColor: cardColor,
+                    onTap: () => _openScreen(const ProfileScreen()),
+                  ),
+                  const SizedBox(height: 10),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    label: 'Settings',
+                    cardColor: cardColor,
+                    onTap: () => _openScreen(const SettingsScreen()),
+                  ),
+                  const SizedBox(height: 10),
+                  _DrawerItem(
+                    icon: Icons.notifications_none_outlined,
+                    label: 'Notifications',
+                    cardColor: cardColor,
+                    onTap: () => _openScreen(const NotificationsScreen()),
+                  ),
+                  const SizedBox(height: 10),
+                  _DrawerItem(
+                    icon: Icons.help_outline,
+                    label: 'Help & Support',
+                    cardColor: cardColor,
+                    onTap: () => _openRoute(AppRoutes.settings),
+                  ),
+                ],
+              ),
             ),
-            _DrawerItem(
-              icon: Icons.settings_outlined,
-              label: 'Settings',
-              onTap: () => _openScreen(const SettingsScreen()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+              child: _DrawerItem(
+                icon: Icons.logout,
+                label: 'Log Out',
+                cardColor: cardColor,
+                danger: true,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  SessionManager.confirmAndLogout(context);
+                },
+              ),
             ),
-            _DrawerItem(
-              icon: Icons.notifications_none_outlined,
-              label: 'Notifications',
-              onTap: () => _openScreen(const NotificationsScreen()),
-            ),
-            _DrawerItem(
-              icon: Icons.help_outline,
-              label: 'Help & Support',
-              onTap: () => _openRoute(AppRoutes.settings),
-            ),
-            const Spacer(),
-            Divider(height: 1, color: maroon.withValues(alpha: 0.15)),
-            _DrawerItem(
-              icon: Icons.logout,
-              label: 'Log Out',
-              danger: true,
-              onTap: () {
-                Navigator.of(context).pop();
-                SessionManager.confirmAndLogout(context);
-              },
-            ),
-            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -178,37 +253,61 @@ class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final Color cardColor;
   final bool danger;
 
   const _DrawerItem({
     required this.icon,
     required this.label,
     required this.onTap,
+    required this.cardColor,
     this.danger = false,
   });
 
   @override
   Widget build(BuildContext context) {
     const maroon = Color(0xFF800020);
-    final color = danger ? Colors.red : maroon;
+    final color = danger ? const Color(0xFFC62828) : maroon;
 
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 14),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: color,
+    return Material(
+      color: danger ? color.withValues(alpha: 0.06) : cardColor,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, color: color, size: 19),
               ),
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+              if (!danger)
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: color.withValues(alpha: 0.4),
+                ),
+            ],
+          ),
         ),
       ),
     );
