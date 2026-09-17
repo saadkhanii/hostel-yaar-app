@@ -2,6 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
+import '../../shared/widgets/hostel_thumbnail.dart';
 
 class HostelListScreen extends StatefulWidget {
   final String? initialQuery;
@@ -655,18 +656,11 @@ class _HostelResultCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: maroon.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.home_work_outlined,
-                color: maroon,
-                size: 28,
-              ),
+            HostelThumbnail(
+              photos: (hostel['photos'] as List?)?.cast<String>() ?? const [],
+              size: 60,
+              radius: 12,
+              iconSize: 28,
             ),
             const SizedBox(width: 14),
             Expanded(

@@ -74,7 +74,6 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
-    final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
     final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
 
     return Drawer(

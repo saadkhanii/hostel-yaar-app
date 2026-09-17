@@ -3,6 +3,7 @@ import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
 import '../../shared/widgets/app_drawer.dart';
+import '../../shared/widgets/hostel_thumbnail.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -379,7 +380,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         )
       else
         SizedBox(
-          height: 190,
+          height: 260,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: _topRecommended.map((hostel) {
@@ -391,6 +392,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                 matchPercent: hostel['hasVacancy'] == true
                     ? 'Available'
                     : 'Full',
+                photos: (hostel['photos'] as List?)?.cast<String>() ?? const [],
                 isDark: isDark,
                 cardColor: cardColor,
                 onTap: () => _openHostelDetail(context, hostel),
@@ -492,6 +494,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
             price: 'Rs. ${hostel['startingPrice'] ?? 0}/mo',
             type: hostel['type'] as String? ?? '',
             hasVacancy: hostel['hasVacancy'] == true,
+            photos: (hostel['photos'] as List?)?.cast<String>() ?? const [],
             isDark: isDark,
             cardColor: cardColor,
             onTap: () => _openHostelDetail(context, hostel),
@@ -554,6 +557,7 @@ class _HostelCard extends StatelessWidget {
   final String price;
   final String type;
   final String matchPercent;
+  final List<String> photos;
   final bool isDark;
   final Color cardColor;
   final VoidCallback? onTap;
@@ -564,6 +568,7 @@ class _HostelCard extends StatelessWidget {
     required this.price,
     required this.type,
     required this.matchPercent,
+    required this.photos,
     required this.isDark,
     required this.cardColor,
     this.onTap,
@@ -595,6 +600,13 @@ class _HostelCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              HostelThumbnail(
+                photos: photos,
+                size: 60,
+                radius: 10,
+                iconSize: 28,
+              ),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -778,6 +790,7 @@ class _HostelListTile extends StatelessWidget {
   final String price;
   final String type;
   final bool hasVacancy;
+  final List<String> photos;
   final bool isDark;
   final Color cardColor;
   final VoidCallback? onTap;
@@ -788,6 +801,7 @@ class _HostelListTile extends StatelessWidget {
     required this.price,
     required this.type,
     required this.hasVacancy,
+    required this.photos,
     required this.isDark,
     required this.cardColor,
     this.onTap,
@@ -817,18 +831,11 @@ class _HostelListTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: maroon.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.home_work_outlined,
-                  color: maroon,
-                  size: 24,
-                ),
+              HostelThumbnail(
+                photos: photos,
+                size: 48,
+                radius: 12,
+                iconSize: 24,
               ),
               const SizedBox(width: 12),
               Expanded(
