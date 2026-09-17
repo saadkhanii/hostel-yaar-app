@@ -22,6 +22,7 @@ class AppRoutes {
   static const String wardenHome = '/warden-home';
   static const String seekerHome = '/seeker-home';
   static const savedHostels = '/saved-hostels';
+  static const myRequests = '/my-requests';
 
 // Add more routes as needed
 }

@@ -78,6 +78,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   void _onNavTap(int index) {
     switch (index) {
       case 0:
+      // Already on Home.
         break;
       case 1:
         _goToSearch();
@@ -86,7 +87,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         NavigationService.navigateTo(AppRoutes.savedHostels);
         break;
       case 3:
-        SessionManager.confirmAndLogout(context);
+        NavigationService.navigateTo(AppRoutes.myRequests);
         break;
     }
   }
@@ -229,8 +230,8 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
             label: 'Saved',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: 'Profile',
+            icon: Icon(Icons.inbox_outlined),
+            label: 'Requests',
           ),
         ],
       ),

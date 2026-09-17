@@ -7,6 +7,7 @@ import 'package:hostel_yaar/features/auth/forgot_password.dart';
 import 'package:hostel_yaar/features/auth/otp.dart';
 import 'package:hostel_yaar/features/auth/reset_password.dart'; // ← NEW
 
+import '../../features/seeker/my_requests_screen.dart';
 import '../../features/seeker/seeker_dashboard.dart';
 import '../../features/seeker/hostel_list.dart';
 import '../../features/seeker/hostel_detail.dart';
@@ -90,6 +91,9 @@ class AppRouter {
 
       case AppRoutes.savedHostels:
         return MaterialPageRoute(builder: (_) => const SavedHostelsScreen());
+
+      case AppRoutes.myRequests:
+        return MaterialPageRoute(builder: (_) => const MyRequestsScreen());
 
       default:
         return MaterialPageRoute(

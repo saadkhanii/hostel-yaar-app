@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../core/services/booking_service.dart';
 import '../../core/services/hostel_service.dart';
 
 // ── Hostel Detail Screen ───────────────────────────────────────────────
@@ -95,21 +96,40 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
     setState(() => _isRefreshing = true);
 
-    // Fetch hostel + saved-status in parallel.
     try {
       final results = await Future.wait([
         _hostelService.getHostel(id),
         _isSavedOnServer(id),
+        _pendingRoomNumbersFor(id),
       ]);
 
       if (!mounted) return;
       setState(() {
         _hostel = results[0] as Map<String, dynamic>;
         _isSaved = results[1] as bool;
+        _requestedRooms
+          ..clear()
+          ..addAll(results[2] as Set<String>);
         _isRefreshing = false;
       });
     } catch (_) {
       if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  /// Room numbers the current seeker already has a pending request for,
+  /// in this specific hostel.
+  Future<Set<String>> _pendingRoomNumbersFor(String hostelId) async {
+    try {
+      final requests = await BookingService().listMyRequests();
+      return requests
+          .where((r) =>
+      r['hostelId'] == hostelId && r['status'] == 'pending')
+          .map((r) => (r['roomNumber'] as String?) ?? '')
+          .where((s) => s.isNotEmpty)
+          .toSet();
+    } catch (_) {
+      return <String>{};
     }
   }
 
@@ -173,106 +193,196 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 
-  void _requestBooking(Map<String, dynamic> room) {
-    // TODO (Phase 4): POST to /bookings once the requests flow exists.
-    // For now, confirm intent locally so the user gets feedback.
+  Future<void> _requestBooking(Map<String, dynamic> room) async {
     DateTime? moveInDate;
+    final messageCtrl = TextEditingController();
+    bool isSubmitting = false;
+    String? errorText;
 
-    showDialog(
+    await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: Theme.of(context).brightness == Brightness.dark
               ? const Color(0xFF1D2128)
               : const Color(0xFFF3E6D5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             'Request to Book',
             style: TextStyle(color: maroon, fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Send a booking request for Room ${room['number']} at '
-                    '${_hostel['name']}? The warden will confirm availability '
-                    'before you pay any advance.',
-                style: TextStyle(color: maroon.withValues(alpha: 0.75)),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'When do you want to move in?',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500, color: maroon),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate:
-                    moveInDate ?? DateTime.now().add(const Duration(days: 1)),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (picked != null) {
-                    setDialogState(() => moveInDate = picked);
-                  }
-                },
-                child: Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: maroon.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: maroon.withValues(alpha: 0.2)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today_outlined,
-                          color: maroon, size: 18),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          moveInDate == null
-                              ? 'Select a date'
-                              : _formatDate(moveInDate!),
-                          style: const TextStyle(
-                              fontSize: 13,
-                              color: maroon,
-                              fontWeight: FontWeight.w600),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Send a booking request for Room ${room['number']} at '
+                      '${_hostel['name']}? The warden will confirm availability '
+                      'before you pay any advance.',
+                  style: TextStyle(color: maroon.withValues(alpha: 0.75)),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'When do you want to move in?',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: maroon),
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: moveInDate ??
+                          DateTime.now().add(const Duration(days: 1)),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => moveInDate = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: maroon.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: maroon.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            color: maroon, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            moveInDate == null
+                                ? 'Select a date'
+                                : _formatDate(moveInDate!),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: maroon,
+                                fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 14),
+                Text(
+                  'Message (optional)',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: maroon),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: messageCtrl,
+                  maxLines: 3,
+                  maxLength: 500,
+                  style: const TextStyle(fontSize: 13, color: maroon),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. I\'m a student looking to move in soon.',
+                    hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: maroon.withValues(alpha: 0.4)),
+                    counterStyle: TextStyle(
+                        fontSize: 10, color: maroon.withValues(alpha: 0.4)),
+                    filled: true,
+                    fillColor: maroon.withValues(alpha: 0.06),
+                    contentPadding: const EdgeInsets.all(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                      BorderSide(color: maroon.withValues(alpha: 0.2)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: maroon),
+                    ),
+                  ),
+                ),
+                if (errorText != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    errorText!,
+                    style: const TextStyle(
+                        fontSize: 12, color: Colors.redAccent),
+                  ),
+                ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.pop(dialogContext),
               child: Text('Cancel',
                   style: TextStyle(color: maroon.withValues(alpha: 0.6))),
             ),
             TextButton(
-              onPressed: moveInDate == null
+              onPressed: moveInDate == null || isSubmitting
                   ? null
-                  : () {
-                setState(() =>
-                    _requestedRooms.add(room['number'] as String));
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Booking requests are coming soon. Your intent has been noted for Room ${room['number']}.',
+                  : () async {
+                setDialogState(() {
+                  isSubmitting = true;
+                  errorText = null;
+                });
+
+                try {
+                  await BookingService().createRequest(
+                    hostelId: _hostel['id'] as String,
+                    roomId: room['id'] as String,
+                    moveInDate: moveInDate!,
+                    message: messageCtrl.text,
+                  );
+
+                  if (!mounted) return;
+                  Navigator.pop(dialogContext);
+
+                  setState(() =>
+                      _requestedRooms.add(room['number'] as String));
+
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Request sent for Room ${room['number']}! '
+                            'The warden will respond soon.',
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  setDialogState(() {
+                    isSubmitting = false;
+                    errorText =
+                        e.toString().replaceFirst('Exception: ', '');
+                  });
+                }
               },
               style: TextButton.styleFrom(foregroundColor: maroon),
-              child: const Text('Send Request',
+              child: isSubmitting
+                  ? const SizedBox(
+                height: 16,
+                width: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(maroon),
+                ),
+              )
+                  : const Text('Send Request',
                   style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ],
