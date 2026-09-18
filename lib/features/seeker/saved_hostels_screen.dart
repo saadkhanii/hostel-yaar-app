@@ -31,8 +31,10 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
       case AppTab.home:
         NavigationService.navigateAndRemoveUntil(AppRoutes.seekerHome);
         break;
-      case AppTab.search:
-        NavigationService.navigateTo(AppRoutes.hostelList);
+      case AppTab.alerts:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alerts — coming soon')),
+        );
         break;
       case AppTab.saved:
       // Already here.

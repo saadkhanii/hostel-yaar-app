@@ -96,10 +96,12 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   void _onTabTap(AppTab tab) {
     switch (tab) {
       case AppTab.home:
-        // Already here.
+      // Already here.
         break;
-      case AppTab.search:
-        _goToSearch();
+      case AppTab.alerts:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alerts — coming soon')),
+        );
         break;
       case AppTab.saved:
         NavigationService.navigateTo(AppRoutes.savedHostels);

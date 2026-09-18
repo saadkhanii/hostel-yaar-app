@@ -25,7 +25,7 @@ class AppBottomNav extends StatelessWidget {
     if (isSeeker) {
       return const [
         (tab: AppTab.home, icon: Icons.home_outlined, label: 'Home'),
-        (tab: AppTab.search, icon: Icons.search, label: 'Search'),
+        (tab: AppTab.alerts, icon: Icons.notifications_outlined, label: 'Alerts'),
         (tab: AppTab.saved, icon: Icons.favorite_outline, label: 'Saved'),
         (tab: AppTab.requests, icon: Icons.inbox_outlined, label: 'Requests'),
       ];
