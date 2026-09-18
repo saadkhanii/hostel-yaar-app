@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hostel_yaar/shared/widgets/user_avatar.dart';
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
@@ -40,7 +41,7 @@ class _AppDrawerState extends State<AppDrawer> {
     final role = await _authService.getRole();
     if (!mounted) return;
     setState(() {
-      _fullName = name ?? 'User';
+      _fullName = AuthService.titleCase((name ?? 'User').trim());
       _email = email ?? '';
       _role = role ?? 'seeker';
     });
@@ -61,14 +62,6 @@ class _AppDrawerState extends State<AppDrawer> {
     NavigationService.navigateTo(route);
   }
 
-  String get _initials {
-    final trimmed = _fullName.trim();
-    if (trimmed.isEmpty) return '?';
-    final parts = trimmed.split(RegExp(r'\s+'));
-    final first = parts.first.isNotEmpty ? parts.first[0] : '';
-    final last = parts.length > 1 && parts.last.isNotEmpty ? parts.last[0] : '';
-    return (first + last).toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +101,6 @@ class _AppDrawerState extends State<AppDrawer> {
               child: Row(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -117,14 +108,10 @@ class _AppDrawerState extends State<AppDrawer> {
                         width: 2,
                       ),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _initials,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    child: const UserAvatar(
+                      size: 52,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 14),

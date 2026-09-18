@@ -1,10 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../core/services/auth_service.dart';
 import '../../core/services/hostel_service.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
+import '../../shared/widgets/user_avatar.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -24,6 +26,8 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   final _hostelService = HostelService();
   final _searchCtrl = TextEditingController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _authService = AuthService();
+  String _userName = '';
 
   List<Map<String, dynamic>> _allHostels = [];
   bool _isLoading = true;
@@ -32,8 +36,18 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   @override
   void initState() {
     super.initState();
+    _loadUserName();
     _loadHostels();
   }
+
+  Future<void> _loadUserName() async {
+    final name = await _authService.getFullName();
+    if (!mounted) return;
+    setState(() {
+      _userName = name ?? 'there';
+    });
+  }
+
 
   @override
   void dispose() {
@@ -82,7 +96,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   void _onTabTap(AppTab tab) {
     switch (tab) {
       case AppTab.home:
-      // Already here.
+        // Already here.
         break;
       case AppTab.search:
         _goToSearch();
@@ -152,35 +166,28 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Ali Hassan',
-                            style: TextStyle(
+                          Text(
+                            _userName.isEmpty ? '...' : _userName,
+                            style: const TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
-                      GestureDetector(
-                        onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                        child: Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.15),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 24,
-                          ),
+                      UserAvatar(
+                        size: 46,
+                        backgroundColor: Colors.white.withValues(alpha: 0.15),
+                        foregroundColor: Colors.white,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          width: 1.5,
                         ),
+                        onTap: () =>
+                            _scaffoldKey.currentState?.openEndDrawer(),
                       ),
                     ],
                   ),
@@ -345,7 +352,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
         )
       else
         SizedBox(
-          height: 260,
+          height: 262,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: _topRecommended.map((hostel) {
@@ -542,119 +549,167 @@ class _HostelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const maroon = Color(0xFF800020);
-    return Material(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
+    final hasPhoto = photos.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 14),
+      child: Material(
+        color: cardColor,
         borderRadius: BorderRadius.circular(18),
-        child: Container(
-          width: 200,
-          margin: const EdgeInsets.only(right: 14),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HostelThumbnail(
-                photos: photos,
-                size: 60,
-                radius: 10,
-                iconSize: 28,
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: maroon,
-                  borderRadius: BorderRadius.circular(8),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            width: 180,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Full-width photo ─────────────────────────
+                SizedBox(
+                  width: 180,
+                  height: 110,
+                  child: hasPhoto
+                      ? Image.network(
+                          photos.first,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: maroon.withValues(alpha: 0.08),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation(maroon),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stack) => Container(
+                            color: maroon.withValues(alpha: 0.1),
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: maroon.withValues(alpha: 0.4),
+                              size: 28,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: maroon.withValues(alpha: 0.1),
+                          child: Icon(
+                            Icons.home_work_outlined,
+                            color: maroon.withValues(alpha: 0.5),
+                            size: 36,
+                          ),
+                        ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.auto_awesome,
-                      size: 12,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      matchPercent,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+
+                // ── Content ──────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Match badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: matchPercent == 'Available'
+                              ? const Color(0xFF2E7D32).withValues(alpha: 0.12)
+                              : Colors.orange.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          matchPercent,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: matchPercent == 'Available'
+                                ? const Color(0xFF2E7D32)
+                                : Colors.orange.shade800,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: maroon,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 12,
-                    color: maroon.withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      location,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: maroon.withValues(alpha: 0.6),
+                      const SizedBox(height: 8),
+
+                      // Name
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: maroon,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      const SizedBox(height: 3),
+
+                      // Location
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 11,
+                            color: maroon.withValues(alpha: 0.55),
+                          ),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: maroon.withValues(alpha: 0.55),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Price
+                      Text(
+                        price,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: maroon,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Type chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: maroon.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          type,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: maroon.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                price,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: maroon,
                 ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: maroon.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  type,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: maroon.withValues(alpha: 0.8),
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -775,122 +830,124 @@ class _HostelListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const maroon = Color(0xFF800020);
-    return Material(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              HostelThumbnail(
-                photos: photos,
-                size: 48,
-                radius: 12,
-                iconSize: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                HostelThumbnail(
+                  photos: photos,
+                  size: 48,
+                  radius: 12,
+                  iconSize: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: maroon,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 12,
+                            color: maroon.withValues(alpha: 0.5),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            location,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: maroon.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: hasVacancy
+                            ? const Color(0xFF2E7D32).withValues(alpha: 0.12)
+                            : Colors.orange.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        hasVacancy ? 'Vacant' : 'Full',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: hasVacancy
+                              ? const Color(0xFF2E7D32)
+                              : Colors.orange.shade800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      name,
+                      price,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                         color: maroon,
                       ),
                     ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 12,
-                          color: maroon.withValues(alpha: 0.5),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: maroon.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        type,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: maroon.withValues(alpha: 0.8),
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          location,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: maroon.withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: hasVacancy
-                          ? const Color(0xFF2E7D32).withValues(alpha: 0.12)
-                          : Colors.orange.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      hasVacancy ? 'Vacant' : 'Full',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: hasVacancy
-                            ? const Color(0xFF2E7D32)
-                            : Colors.orange.shade800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    price,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: maroon,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: maroon.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      type,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: maroon.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

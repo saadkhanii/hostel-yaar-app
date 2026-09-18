@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/auth_service.dart';
+import '../../core/services/cloudinary_service.dart';
 import '../../core/services/session_manager.dart';
+import '../../shared/widgets/user_avatar.dart';
 
 /// Account screen reached from the drawer. Shows the current user's
 /// info and lets them update their name, phone, and password.
@@ -16,8 +21,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const maroon = Color(0xFF800020);
 
   final _authService = AuthService();
+  final _cloudinaryService = CloudinaryService();
+  final _imagePicker = ImagePicker();
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+
+  bool _isUploadingPhoto = false;
 
   String _originalName = '';
   String _originalPhone = '';
@@ -37,7 +46,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _phoneCtrl.dispose();
     super.dispose();
   }
+  Future<void> _changeProfilePicture() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1D2128)
+          : const Color(0xFFF3E6D5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: maroon),
+              title: const Text('Choose from Gallery',
+                  style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: maroon),
+              title:
+              const Text('Take Photo', style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close, color: maroon),
+              title: const Text('Cancel', style: TextStyle(color: maroon)),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
 
+    if (source == null) return;
+
+    final XFile? picked = await _imagePicker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 800,
+      maxHeight: 800,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final url = await _cloudinaryService.uploadImage(File(picked.path));
+      await _authService.updateProfile(profilePictureUrl: url);
+      if (!mounted) return;
+      setState(() => _isUploadingPhoto = false);
+      _snack('Profile picture updated');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isUploadingPhoto = false);
+      _snack(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
   Future<void> _loadUser() async {
     final name = await _authService.getFullName();
     final email = await _authService.getEmail();
@@ -327,10 +394,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 12),
-              CircleAvatar(
-                radius: 48,
-                backgroundColor: maroon.withValues(alpha: 0.15),
-                child: const Icon(Icons.person, color: maroon, size: 52),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  UserAvatar(
+                    size: 100,
+                    showEditBadge: true,
+                    onTap: _isUploadingPhoto ? null : _changeProfilePicture,
+                  ),
+                  if (_isUploadingPhoto)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor:
+                            AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 16),
               Text(
