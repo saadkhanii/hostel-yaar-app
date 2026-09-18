@@ -33,9 +33,7 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
         NavigationService.navigateTo(AppRoutes.wardenRequests);
         break;
       case AppTab.alerts:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Alerts — coming soon')),
-        );
+        NavigationService.navigateTo(AppRoutes.notifications);
         break;
       default:
         break;

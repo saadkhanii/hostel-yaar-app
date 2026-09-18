@@ -8,6 +8,7 @@ import '../../core/services/session_manager.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import 'notification_badge.dart';
 
 /// Shared right-side drawer for both dashboards. Shows the current
 /// user's identity at the top, then a list of destinations. Uses
@@ -203,6 +204,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     icon: Icons.notifications_none_outlined,
                     label: 'Notifications',
                     cardColor: cardColor,
+                    badge: const UnreadBadge(),
                     onTap: () => _openScreen(const NotificationsScreen()),
                   ),
                   const SizedBox(height: 10),
@@ -241,6 +243,7 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback onTap;
   final Color cardColor;
   final bool danger;
+  final Widget? badge;
 
   const _DrawerItem({
     required this.icon,
@@ -248,6 +251,7 @@ class _DrawerItem extends StatelessWidget {
     required this.onTap,
     required this.cardColor,
     this.danger = false,
+    this.badge,
   });
 
   @override
@@ -286,6 +290,7 @@ class _DrawerItem extends StatelessWidget {
                   ),
                 ),
               ),
+              if (badge != null) badge!,
               if (!danger)
                 Icon(
                   Icons.chevron_right,

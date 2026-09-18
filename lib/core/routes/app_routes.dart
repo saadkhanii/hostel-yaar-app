@@ -17,12 +17,12 @@ class AppRoutes {
   static const String manageHostel = '/manage-hostel';
   static const String editHostel = '/edit-hostel';
   static const String wardenRequests = '/warden-requests';
-  static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String wardenHome = '/warden-home';
   static const String seekerHome = '/seeker-home';
   static const savedHostels = '/saved-hostels';
   static const myRequests = '/my-requests';
+  static const notifications = '/notifications';
 
 // Add more routes as needed
 }
