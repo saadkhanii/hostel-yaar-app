@@ -10,6 +10,7 @@ class _StorageKeys {
   static const fullName = 'user_full_name';
   static const email = 'user_email';
   static const role = 'user_role';
+  static const phone = 'user_phone';
 }
 
 class AuthService {
@@ -36,7 +37,19 @@ class AuthService {
       throw Exception(msg);
     }
   }
-
+  String _errorMessage(DioException e) {
+    if (e.response?.data is Map && e.response!.data['detail'] != null) {
+      return e.response!.data['detail'].toString();
+    }
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return 'Server not responding. Is the backend running?';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Cannot reach the server. Check your network.';
+    }
+    return 'Request failed: ${e.message ?? 'unknown error'}';
+  }
   // --- SIGNUP ---
   Future<Map<String, dynamic>> signup({
     required String fullName,
@@ -119,6 +132,11 @@ class AuthService {
     await _storage.write(key: _StorageKeys.fullName, value: data['full_name']);
     await _storage.write(key: _StorageKeys.email, value: data['email']);
     await _storage.write(key: _StorageKeys.role, value: data['role']);
+    // Only present on some responses (e.g. after profile update).
+    final phone = data['phone'] as String?;
+    if (phone != null) {
+      await _storage.write(key: _StorageKeys.phone, value: phone);
+    }
   }
 
   Future<String?> getToken() => _storage.read(key: _StorageKeys.token);
@@ -130,8 +148,58 @@ class AuthService {
 
   Future<String?> getEmail() => _storage.read(key: _StorageKeys.email);
 
-  Future<String?> getUserId() => _storage.read(key: _StorageKeys.userId);
+  Future<String?> getPhone() => _storage.read(key: _StorageKeys.phone);
 
+  Future<String?> getUserId() => _storage.read(key: _StorageKeys.userId);
+  // ─────────────────────────────────────────────────────────────────
+  // Profile
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Update the logged-in user's name and/or phone. Also refreshes the
+  /// locally cached `full_name` so the drawer/greeting reflect the
+  /// change without needing a re-login.
+  Future<void> updateProfile({
+    String? fullName,
+    String? phone,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        if (fullName != null) 'full_name': fullName,
+        if (phone != null) 'phone': phone,
+      };
+      if (body.isEmpty) return;
+
+      final response = await _dio.patch('/auth/me', data: body);
+      final data = response.data as Map<String, dynamic>;
+
+      // Refresh cached identity so the UI is consistent everywhere.
+      final newName = data['full_name'] as String?;
+      if (newName != null && newName.isNotEmpty) {
+        await _storage.write(key: _StorageKeys.fullName, value: newName);
+      }
+      final newPhone = data['phone'] as String?;
+      if (newPhone != null) {
+        await _storage.write(key: _StorageKeys.phone, value: newPhone);
+      }
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
+  /// Change the logged-in user's password.
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _dio.patch('/auth/change-password', data: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
   /// True if a JWT token is present. Note: does NOT verify the token hasn't
   /// expired — that's handled by the backend (returns 401) and by the Dio
   /// interceptor if you add one later.
@@ -147,5 +215,6 @@ class AuthService {
     await _storage.delete(key: _StorageKeys.fullName);
     await _storage.delete(key: _StorageKeys.email);
     await _storage.delete(key: _StorageKeys.role);
+    await _storage.delete(key: _StorageKeys.phone);
   }
 }
