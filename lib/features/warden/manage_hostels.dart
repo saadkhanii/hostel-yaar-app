@@ -2,6 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
+import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
 import 'hostel_rooms_screen.dart';
 
@@ -20,7 +21,26 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
   List<Map<String, dynamic>> _hostels = [];
   bool _isLoading = true;
   String? _errorText;
-
+  void _onWardenTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+        NavigationService.navigateAndRemoveUntil(AppRoutes.wardenHome);
+        break;
+      case AppTab.hostels:
+      // Already here.
+        break;
+      case AppTab.requests:
+        NavigationService.navigateTo(AppRoutes.wardenRequests);
+        break;
+      case AppTab.alerts:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alerts — coming soon')),
+        );
+        break;
+      default:
+        break;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -220,6 +240,11 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
         centerTitle: true,
       ),
       body: SafeArea(child: _buildBody(isDark, fg)),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: false,
+        currentTab: AppTab.hostels,
+        onTap: _onWardenTabTap,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: maroon,
         icon: const Icon(Icons.add, color: Colors.white),

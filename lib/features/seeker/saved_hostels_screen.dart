@@ -3,6 +3,7 @@ import 'package:hostel_yaar/core/routes/app_routes.dart';
 import 'package:hostel_yaar/core/routes/navigation_service.dart';
 import 'package:hostel_yaar/core/services/hostel_service.dart';
 
+import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
 
 // ── Saved Hostels Screen ───────────────────────────────────────────────
@@ -25,6 +26,24 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
   bool _isLoading = true;
   String? _errorText;
 
+  void _onTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+        NavigationService.navigateAndRemoveUntil(AppRoutes.seekerHome);
+        break;
+      case AppTab.search:
+        NavigationService.navigateTo(AppRoutes.hostelList);
+        break;
+      case AppTab.saved:
+      // Already here.
+        break;
+      case AppTab.requests:
+        NavigationService.navigateTo(AppRoutes.myRequests);
+        break;
+      default:
+        break;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -120,7 +139,12 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(child: _buildBody(isDark, fg)),
+        body: SafeArea(child: _buildBody(isDark, fg)),
+        bottomNavigationBar: AppBottomNav(
+          isSeeker: true,
+          currentTab: AppTab.saved,
+          onTap: _onTabTap,
+        ),
     );
   }
 

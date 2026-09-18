@@ -2,6 +2,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/hostel_service.dart';
+import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
 
@@ -78,19 +79,21 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
     NavigationService.navigateTo(AppRoutes.hostelList, arguments: query);
   }
 
-  void _onNavTap(int index) {
-    switch (index) {
-      case 0:
-        // Already on Home.
+  void _onTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+      // Already here.
         break;
-      case 1:
+      case AppTab.search:
         _goToSearch();
         break;
-      case 2:
+      case AppTab.saved:
         NavigationService.navigateTo(AppRoutes.savedHostels);
         break;
-      case 3:
+      case AppTab.requests:
         NavigationService.navigateTo(AppRoutes.myRequests);
+        break;
+      default:
         break;
     }
   }
@@ -263,48 +266,10 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
       ),
 
       // ── Bottom Nav ─────────────────────────────────────────────
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1D2128) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BottomNavigationBar(
-            backgroundColor: isDark ? const Color(0xFF1D2128) : Colors.white,
-            elevation: 0,
-            selectedItemColor: maroon,
-            unselectedItemColor: maroon.withValues(alpha: 0.35),
-            type: BottomNavigationBarType.fixed,
-            currentIndex: 0,
-            onTap: _onNavTap,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                label: 'Search',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_outline),
-                label: 'Saved',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.inbox_outlined),
-                label: 'Requests',
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: true,
+        currentTab: AppTab.home,
+        onTap: _onTabTap,
       ),
     );
   }

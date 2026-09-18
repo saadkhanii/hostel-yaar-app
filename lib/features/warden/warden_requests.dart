@@ -1,6 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../core/routes/app_routes.dart';
+import '../../core/routes/navigation_service.dart';
 import '../../core/services/booking_service.dart';
+import '../../shared/widgets/app_bottom_nav.dart';
 
 // ── Warden Booking Requests Inbox ──────────────────────────────────────
 // Reached from the Warden Dashboard's "Requests" stat card and the
@@ -25,6 +28,26 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
   String? _errorText;
   _RequestFilter _filter = _RequestFilter.all;
 
+  void _onWardenTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+        NavigationService.navigateAndRemoveUntil(AppRoutes.wardenHome);
+        break;
+      case AppTab.hostels:
+        NavigationService.navigateTo(AppRoutes.manageHostel);
+        break;
+      case AppTab.requests:
+      // Already here.
+        break;
+      case AppTab.alerts:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alerts — coming soon')),
+        );
+        break;
+      default:
+        break;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -240,10 +263,7 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       appBar: AppBar(
         backgroundColor: bg,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: fg, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Booking Requests',
           style: TextStyle(
@@ -255,6 +275,11 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
         centerTitle: true,
       ),
       body: SafeArea(child: _buildBody(fg)),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: false,
+        currentTab: AppTab.requests,
+        onTap: _onWardenTabTap,
+      ),
     );
   }
 

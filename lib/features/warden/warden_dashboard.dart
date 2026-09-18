@@ -2,6 +2,7 @@
 
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
+import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 
 class WardenDashboard extends StatefulWidget {
@@ -15,6 +16,25 @@ class _WardenDashboardState extends State<WardenDashboard> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _openDrawer() => _scaffoldKey.currentState?.openEndDrawer();
+  void _onWardenTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+        break;
+      case AppTab.hostels:
+        NavigationService.navigateTo(AppRoutes.manageHostel);
+        break;
+      case AppTab.requests:
+        NavigationService.navigateTo(AppRoutes.wardenRequests);
+        break;
+      case AppTab.alerts:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Alerts — coming soon')),
+        );
+        break;
+      default:
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,64 +233,10 @@ class _WardenDashboardState extends State<WardenDashboard> {
       ),
 
       // ── Bottom Nav ─────────────────────────────────────────────
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1D2128) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BottomNavigationBar(
-            backgroundColor: isDark ? const Color(0xFF1D2128) : Colors.white,
-            elevation: 0,
-            selectedItemColor: maroon,
-            unselectedItemColor: maroon.withValues(alpha: 0.35),
-            type: BottomNavigationBarType.fixed,
-            currentIndex: 0,
-            onTap: (index) {
-              switch (index) {
-                case 0:
-                  break;
-                case 1:
-                  NavigationService.navigateTo(AppRoutes.manageHostel);
-                  break;
-                case 2:
-                  NavigationService.navigateTo(AppRoutes.wardenRequests);
-                  break;
-                case 3:
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Alerts — coming soon')),
-                  );
-                  break;
-              }
-            },
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard_outlined),
-                label: 'Dashboard',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_work_outlined),
-                label: 'Hostels',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.inbox_outlined),
-                label: 'Requests',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.notifications_outlined),
-                label: 'Alerts',
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: false,
+        currentTab: AppTab.home,
+        onTap: _onWardenTabTap,
       ),
     );
   }

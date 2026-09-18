@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/routes/app_routes.dart';
+import '../../core/routes/navigation_service.dart';
 import '../../core/services/booking_service.dart';
+import '../../shared/widgets/app_bottom_nav.dart';
 
 /// Seeker-facing screen: everything the current seeker has requested,
 /// with status. Reached from the bottom-nav "Requests" tab.
@@ -22,7 +25,24 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
   bool _isLoading = true;
   String? _errorText;
   _StatusFilter _filter = _StatusFilter.all;
-
+  void _onTabTap(AppTab tab) {
+    switch (tab) {
+      case AppTab.home:
+        NavigationService.navigateAndRemoveUntil(AppRoutes.seekerHome);
+        break;
+      case AppTab.search:
+        NavigationService.navigateTo(AppRoutes.hostelList);
+        break;
+      case AppTab.saved:
+        NavigationService.navigateTo(AppRoutes.savedHostels);
+        break;
+      case AppTab.requests:
+      // Already here.
+        break;
+      default:
+        break;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -96,6 +116,11 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         centerTitle: true,
       ),
       body: SafeArea(child: _buildBody(fg)),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: true,
+        currentTab: AppTab.requests,
+        onTap: _onTabTap,
+      ),
     );
   }
 
