@@ -12,7 +12,7 @@ class ApiClient {
     dio = Dio(
       BaseOptions(
         // Android emulator: 10.0.2.2 | iOS sim: localhost | Physical device: your PC's LAN IP
-        baseUrl: 'http://192.168.18.98:8000',
+        baseUrl: 'https://hostel-yaar-backend.onrender.com',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {
