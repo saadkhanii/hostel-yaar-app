@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46506318449",
+    "project_id": "q-inventory-20f85",
+    "storage_bucket": "q-inventory-20f85.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46506318449:android:12699cbe6e1af299cbd9d0",
+        "android_client_info": {
+          "package_name": "com.example.hostel_yaar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA06UvJlHs_B3kEabPtYPEfzW54_wob_jQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

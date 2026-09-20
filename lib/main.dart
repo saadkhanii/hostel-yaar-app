@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hostel_yaar/core/routes/app_router.dart';
 import 'package:hostel_yaar/core/routes/app_routes.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:hostel_yaar/core/routes/navigation_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 

@@ -3,6 +3,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/push_notification_service.dart';
 import 'auth_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -78,7 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final destination =
       actualRole == 'warden' ? AppRoutes.wardenHome : AppRoutes.seekerHome;
-
+      // Initialize push notifications for this session.
+      await PushNotificationService.instance.initialize();
       NavigationService.navigateAndRemoveUntil(destination);
     } catch (e) {
       if (!mounted) return;

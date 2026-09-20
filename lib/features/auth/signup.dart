@@ -3,6 +3,7 @@
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/push_notification_service.dart';
 import 'auth_text_field.dart';
 
 enum _SignupRole { seeker, warden }
@@ -76,7 +77,8 @@ class _SignupScreenState extends State<SignupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created. Please log in.')),
       );
-
+      // Initialize push notifications for this session.
+      await PushNotificationService.instance.initialize();
       NavigationService.navigateAndRemoveUntil(AppRoutes.login);
     } catch (e) {
       if (!mounted) return;
