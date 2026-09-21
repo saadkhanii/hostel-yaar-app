@@ -49,6 +49,67 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     _loadRequests();
   }
 
+  Future<void> _cancelRequest(Map<String, dynamic> request) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor:
+          isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Cancel Request',
+            style: TextStyle(color: maroon, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Cancel your request for Room ${request['roomNumber']} at '
+                '${request['hostelName']}? This cannot be undone.',
+            style: TextStyle(color: maroon.withValues(alpha: 0.75)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text('Keep',
+                  style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Cancel Request',
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _bookingService.cancelRequest(request['id'] as String);
+      if (!mounted) return;
+
+      setState(() {
+        _requests.removeWhere((r) => r['id'] == request['id']);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request cancelled')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not cancel: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadRequests() async {
     setState(() {
       _isLoading = true;
@@ -210,6 +271,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                 return _MyRequestCard(
                   request: req,
                   formatDate: _formatDate,
+                  onCancel: () => _cancelRequest(req),
                 );
               },
             ),
@@ -319,10 +381,12 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
 class _MyRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final String Function(String?) formatDate;
+  final VoidCallback onCancel;
 
   const _MyRequestCard({
     required this.request,
     required this.formatDate,
+    required this.onCancel,
   });
 
   static const maroon = Color(0xFF800020);
@@ -431,6 +495,25 @@ class _MyRequestCard extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 12, color: maroon.withValues(alpha: 0.75)),
               ),
+              if (request['seatRequested'] == true) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'Seat',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.purple,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
@@ -512,6 +595,31 @@ class _MyRequestCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+          ],
+          if (status == 'pending') ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onCancel,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: const Icon(Icons.close, size: 16, color: Colors.red),
+                label: const Text(
+                  'Cancel Request',
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],

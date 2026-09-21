@@ -62,6 +62,15 @@ class BookingService {
     }
   }
 
+  /// Cancel a pending booking request. Seeker-only.
+  Future<void> cancelRequest(String requestId) async {
+    try {
+      await _dio.delete('/booking-requests/$requestId');
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
+
   Future<Map<String, dynamic>> acceptRequest(
       String requestId, {
         String? wardenReply,
@@ -108,6 +117,7 @@ class BookingService {
       'seekerId': raw['seeker_id'],
       'hostelId': raw['hostel_id'],
       'roomId': raw['room_id'],
+      'seatRequested': raw['seat_requested'] ?? false,
       'moveInDate': raw['move_in_date'],
       'message': raw['message'],
       'wardenReply': raw['warden_reply'],

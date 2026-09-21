@@ -198,6 +198,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final messageCtrl = TextEditingController();
     bool isSubmitting = false;
     String? errorText;
+    final isSeatRequest = room['bookingType'] == 'Seat';
+    final availableSeats = (room['availableSeats'] as int?) ?? 0;
+    final dialogTitle = isSeatRequest ? 'Request a Seat' : 'Request to Book';
+    final dialogBody = isSeatRequest
+        ? 'Send a request to book a seat in Room ${room['number']} at ${_hostel['name']}? There are $availableSeats seat${availableSeats == 1 ? '' : 's'} available. The warden will assign you one.'
+        : 'Send a booking request for the whole of Room ${room['number']} at ${_hostel['name']}? The warden will confirm availability before you pay any advance.';
 
     await showDialog(
       context: context,
@@ -209,9 +215,12 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               : const Color(0xFFF3E6D5),
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'Request to Book',
-            style: TextStyle(color: maroon, fontWeight: FontWeight.bold),
+          title: Text(
+            dialogTitle,
+            style: const TextStyle(
+              color: maroon,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -219,9 +228,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Send a booking request for Room ${room['number']} at '
-                      '${_hostel['name']}? The warden will confirm availability '
-                      'before you pay any advance.',
+                  dialogBody,
                   style: TextStyle(color: maroon.withValues(alpha: 0.75)),
                 ),
                 const SizedBox(height: 16),
@@ -359,10 +366,17 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   setState(() =>
                       _requestedRooms.add(room['number'] as String));
 
+                  // Refresh the hostel so any server-side change (e.g.
+                  // seat counts updated by the warden) is reflected.
+                  _refreshFromBackend();
+
                   messenger.showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Request sent for Room ${room['number']}! '
+                        isSeatRequest
+                            ? 'Seat request sent for Room ${room['number']}! '
+                            'The warden will assign you a seat.'
+                            : 'Request sent for Room ${room['number']}! '
                             'The warden will respond soon.',
                       ),
                     ),
@@ -919,7 +933,9 @@ class _DetailRoomCard extends StatelessWidget {
                     Text(
                       requested
                           ? 'Requested'
-                          : (available ? 'Request to Book' : 'Unavailable'),
+                          : (available
+                          ? (isSeatRoom ? 'Request a Seat' : 'Request to Book')
+                          : 'Unavailable'),
                       style: TextStyle(
                         color: requested ? Colors.green[800] : Colors.white,
                         fontSize: 12,
