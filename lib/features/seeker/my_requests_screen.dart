@@ -163,6 +163,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
+    final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
 
     return Scaffold(
       backgroundColor: bg,
@@ -176,7 +177,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(child: _buildBody(fg)),
+      body: SafeArea(child: _buildBody(fg, isDark, cardColor)),
       bottomNavigationBar: AppBottomNav(
         isSeeker: true,
         currentTab: AppTab.requests,
@@ -185,7 +186,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     );
   }
 
-  Widget _buildBody(Color fg) {
+  Widget _buildBody(Color fg, bool isDark, Color cardColor) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -271,6 +272,8 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                 return _MyRequestCard(
                   request: req,
                   formatDate: _formatDate,
+                  isDark: isDark,
+                  cardColor: cardColor,
                   onCancel: () => _cancelRequest(req),
                 );
               },
@@ -381,11 +384,15 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
 class _MyRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final String Function(String?) formatDate;
+  final bool isDark;
+  final Color cardColor;
   final VoidCallback onCancel;
 
   const _MyRequestCard({
     required this.request,
     required this.formatDate,
+    required this.isDark,
+    required this.cardColor,
     required this.onCancel,
   });
 
@@ -426,9 +433,15 @@ class _MyRequestCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: maroon.withValues(alpha: 0.06),
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: maroon.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

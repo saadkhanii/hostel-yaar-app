@@ -123,6 +123,7 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
+    final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
 
     return Scaffold(
       backgroundColor: bg,
@@ -139,16 +140,16 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
         ),
         centerTitle: true,
       ),
-        body: SafeArea(child: _buildBody(isDark, fg)),
-        bottomNavigationBar: AppBottomNav(
-          isSeeker: true,
-          currentTab: AppTab.saved,
-          onTap: _onTabTap,
-        ),
+      body: SafeArea(child: _buildBody(isDark, fg, cardColor)),
+      bottomNavigationBar: AppBottomNav(
+        isSeeker: true,
+        currentTab: AppTab.saved,
+        onTap: _onTabTap,
+      ),
     );
   }
 
-  Widget _buildBody(bool isDark, Color fg) {
+  Widget _buildBody(bool isDark, Color fg, Color cardColor) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -219,6 +220,8 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
           final hostel = entry['hostel'] as Map<String, dynamic>;
           return _SavedHostelCard(
             hostel: hostel,
+            isDark: isDark,
+            cardColor: cardColor,
             onTap: () => _openHostelDetail(hostel),
             onUnsave: () => _unsave(hostel),
           );
@@ -277,11 +280,15 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
 // ── Saved Hostel Card ─────────────────────────────────────────────────
 class _SavedHostelCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
+  final bool isDark;
+  final Color cardColor;
   final VoidCallback onTap;
   final VoidCallback onUnsave;
 
   const _SavedHostelCard({
     required this.hostel,
+    required this.isDark,
+    required this.cardColor,
     required this.onTap,
     required this.onUnsave,
   });
@@ -302,9 +309,15 @@ class _SavedHostelCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withValues(alpha: 0.06),
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withValues(alpha: 0.18)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

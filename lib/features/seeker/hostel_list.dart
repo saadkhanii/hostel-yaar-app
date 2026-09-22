@@ -103,8 +103,8 @@ class _HostelListScreenState extends State<HostelListScreen> {
 
     switch (_sortOption) {
       case _SortOption.recommended:
-        // No matchPercent from the backend yet — fall back to price asc,
-        // which gives a sensible "cheapest first" default.
+      // No matchPercent from the backend yet — fall back to price asc,
+      // which gives a sensible "cheapest first" default.
         results.sort((a, b) => _startingPrice(a).compareTo(_startingPrice(b)));
         break;
       case _SortOption.priceLowHigh:
@@ -168,43 +168,43 @@ class _HostelListScreenState extends State<HostelListScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children:
-                    [
-                      ('All', _PriceFilter.all),
-                      ('Under Rs. 8,000', _PriceFilter.under8k),
-                      ('Rs. 8,000 – 12,000', _PriceFilter.from8kTo12k),
-                      ('Above Rs. 12,000', _PriceFilter.above12k),
-                    ].map((entry) {
-                      final (label, value) = entry;
-                      final selected = tempPrice == value;
-                      return GestureDetector(
-                        onTap: () => setSheetState(() => tempPrice = value),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? maroon
-                                : maroon.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected
-                                  ? maroon
-                                  : maroon.withValues(alpha: 0.25),
-                            ),
-                          ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? Colors.white : maroon,
-                            ),
-                          ),
+                [
+                  ('All', _PriceFilter.all),
+                  ('Under Rs. 8,000', _PriceFilter.under8k),
+                  ('Rs. 8,000 – 12,000', _PriceFilter.from8kTo12k),
+                  ('Above Rs. 12,000', _PriceFilter.above12k),
+                ].map((entry) {
+                  final (label, value) = entry;
+                  final selected = tempPrice == value;
+                  return GestureDetector(
+                    onTap: () => setSheetState(() => tempPrice = value),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? maroon
+                            : maroon.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? maroon
+                              : maroon.withValues(alpha: 0.25),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? Colors.white : maroon,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 22),
               const Text(
@@ -220,42 +220,42 @@ class _HostelListScreenState extends State<HostelListScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children:
-                    [
-                      ('Recommended', _SortOption.recommended),
-                      ('Price: Low to High', _SortOption.priceLowHigh),
-                      ('Price: High to Low', _SortOption.priceHighLow),
-                    ].map((entry) {
-                      final (label, value) = entry;
-                      final selected = tempSort == value;
-                      return GestureDetector(
-                        onTap: () => setSheetState(() => tempSort = value),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? maroon
-                                : maroon.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected
-                                  ? maroon
-                                  : maroon.withValues(alpha: 0.25),
-                            ),
-                          ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? Colors.white : maroon,
-                            ),
-                          ),
+                [
+                  ('Recommended', _SortOption.recommended),
+                  ('Price: Low to High', _SortOption.priceLowHigh),
+                  ('Price: High to Low', _SortOption.priceHighLow),
+                ].map((entry) {
+                  final (label, value) = entry;
+                  final selected = tempSort == value;
+                  return GestureDetector(
+                    onTap: () => setSheetState(() => tempSort = value),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? maroon
+                            : maroon.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? maroon
+                              : maroon.withValues(alpha: 0.25),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? Colors.white : maroon,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 26),
               Row(
@@ -322,6 +322,7 @@ class _HostelListScreenState extends State<HostelListScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
+    final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
     final results = _filteredHostels;
 
     return Scaffold(
@@ -343,11 +344,12 @@ class _HostelListScreenState extends State<HostelListScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(child: _buildBody(isDark, fg, results)),
+      body: SafeArea(child: _buildBody(isDark, fg, cardColor, results)),
     );
   }
 
-  Widget _buildBody(bool isDark, Color fg, List<Map<String, dynamic>> results) {
+  Widget _buildBody(bool isDark, Color fg, Color cardColor,
+      List<Map<String, dynamic>> results) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -571,22 +573,24 @@ class _HostelListScreenState extends State<HostelListScreen> {
           child: results.isEmpty
               ? _buildEmptyState(fg)
               : RefreshIndicator(
-                  color: maroon,
-                  onRefresh: _loadHostels,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                    itemCount: results.length,
-                    itemBuilder: (context, i) {
-                      final hostel = results[i];
-                      return _HostelResultCard(
-                        hostel: hostel,
-                        startingPrice: _startingPrice(hostel),
-                        hasVacancy: _hasVacancy(hostel),
-                        onTap: () => _openHostelDetail(hostel),
-                      );
-                    },
-                  ),
-                ),
+            color: maroon,
+            onRefresh: _loadHostels,
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              itemCount: results.length,
+              itemBuilder: (context, i) {
+                final hostel = results[i];
+                return _HostelResultCard(
+                  hostel: hostel,
+                  startingPrice: _startingPrice(hostel),
+                  hasVacancy: _hasVacancy(hostel),
+                  isDark: isDark,
+                  cardColor: cardColor,
+                  onTap: () => _openHostelDetail(hostel),
+                );
+              },
+            ),
+          ),
         ),
       ],
     );
@@ -627,12 +631,16 @@ class _HostelResultCard extends StatelessWidget {
   final Map<String, dynamic> hostel;
   final int startingPrice;
   final bool hasVacancy;
+  final bool isDark;
+  final Color cardColor;
   final VoidCallback onTap;
 
   const _HostelResultCard({
     required this.hostel,
     required this.startingPrice,
     required this.hasVacancy,
+    required this.isDark,
+    required this.cardColor,
     required this.onTap,
   });
 
@@ -649,9 +657,15 @@ class _HostelResultCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: maroon.withValues(alpha: 0.06),
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: maroon.withValues(alpha: 0.18)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

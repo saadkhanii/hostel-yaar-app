@@ -53,6 +53,7 @@ class HostelDetailScreen extends StatefulWidget {
 
 class _HostelDetailScreenState extends State<HostelDetailScreen> {
   static const maroon = Color(0xFF800020);
+  static const maroonDark = Color(0xFF5C0017);
 
   final _hostelService = HostelService();
   final PageController _photoController = PageController();
@@ -209,202 +210,213 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF1D2128)
-              : const Color(0xFFF3E6D5),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            dialogTitle,
-            style: const TextStyle(
-              color: maroon,
-              fontWeight: FontWeight.bold,
+        builder: (context, setDialogState) {
+          final dialogIsDark = Theme.of(context).brightness == Brightness.dark;
+          final dialogCardColor =
+          dialogIsDark ? const Color(0xFF262B33) : Colors.white;
+          return AlertDialog(
+            backgroundColor: dialogIsDark
+                ? const Color(0xFF1D2128)
+                : const Color(0xFFF3E6D5),
+            shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              dialogTitle,
+              style: const TextStyle(
+                color: maroon,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dialogBody,
-                  style: TextStyle(color: maroon.withValues(alpha: 0.75)),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'When do you want to move in?',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: maroon),
-                ),
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: moveInDate ??
-                          DateTime.now().add(const Duration(days: 1)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setDialogState(() => moveInDate = picked);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: maroon.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: maroon.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            color: maroon, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            moveInDate == null
-                                ? 'Select a date'
-                                : _formatDate(moveInDate!),
-                            style: const TextStyle(
-                                fontSize: 13,
-                                color: maroon,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Message (optional)',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: maroon),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: messageCtrl,
-                  maxLines: 3,
-                  maxLength: 500,
-                  style: const TextStyle(fontSize: 13, color: maroon),
-                  decoration: InputDecoration(
-                    hintText: 'e.g. I\'m a student looking to move in soon.',
-                    hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: maroon.withValues(alpha: 0.4)),
-                    counterStyle: TextStyle(
-                        fontSize: 10, color: maroon.withValues(alpha: 0.4)),
-                    filled: true,
-                    fillColor: maroon.withValues(alpha: 0.06),
-                    contentPadding: const EdgeInsets.all(12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                      BorderSide(color: maroon.withValues(alpha: 0.2)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: maroon),
-                    ),
-                  ),
-                ),
-                if (errorText != null) ...[
-                  const SizedBox(height: 4),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    errorText!,
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.redAccent),
+                    dialogBody,
+                    style: TextStyle(color: maroon.withValues(alpha: 0.75)),
                   ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () => Navigator.pop(dialogContext),
-              child: Text('Cancel',
-                  style: TextStyle(color: maroon.withValues(alpha: 0.6))),
-            ),
-            TextButton(
-              onPressed: moveInDate == null || isSubmitting
-                  ? null
-                  : () async {
-                setDialogState(() {
-                  isSubmitting = true;
-                  errorText = null;
-                });
-                // Capture these BEFORE the await so we don't
-                // touch context across an async gap.
-                final messenger = ScaffoldMessenger.of(this.context);
-                final navigator = Navigator.of(dialogContext);
-
-                try {
-                  await BookingService().createRequest(
-                    hostelId: _hostel['id'] as String,
-                    roomId: room['id'] as String,
-                    moveInDate: moveInDate!,
-                    message: messageCtrl.text,
-                  );
-
-                  if (!mounted) return;
-                  navigator.pop();
-
-                  setState(() =>
-                      _requestedRooms.add(room['number'] as String));
-
-                  // Refresh the hostel so any server-side change (e.g.
-                  // seat counts updated by the warden) is reflected.
-                  _refreshFromBackend();
-
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isSeatRequest
-                            ? 'Seat request sent for Room ${room['number']}! '
-                            'The warden will assign you a seat.'
-                            : 'Request sent for Room ${room['number']}! '
-                            'The warden will respond soon.',
+                  const SizedBox(height: 16),
+                  Text(
+                    'When do you want to move in?',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: maroon),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: moveInDate ??
+                            DateTime.now().add(const Duration(days: 1)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() => moveInDate = picked);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: dialogCardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(
+                                alpha: dialogIsDark ? 0.2 : 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined,
+                              color: maroon, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              moveInDate == null
+                                  ? 'Select a date'
+                                  : _formatDate(moveInDate!),
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: maroon,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                } catch (e) {
-                  if (!mounted) return;
-                  setDialogState(() {
-                    isSubmitting = false;
-                    errorText =
-                        e.toString().replaceFirst('Exception: ', '');
-                  });
-                }
-              },
-              style: TextButton.styleFrom(foregroundColor: maroon),
-              child: isSubmitting
-                  ? const SizedBox(
-                height: 16,
-                width: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(maroon),
-                ),
-              )
-                  : const Text('Send Request',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Message (optional)',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: maroon),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: messageCtrl,
+                    maxLines: 3,
+                    maxLength: 500,
+                    style: const TextStyle(fontSize: 13, color: maroon),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. I\'m a student looking to move in soon.',
+                      hintStyle: TextStyle(
+                          fontSize: 12,
+                          color: maroon.withValues(alpha: 0.4)),
+                      counterStyle: TextStyle(
+                          fontSize: 10, color: maroon.withValues(alpha: 0.4)),
+                      filled: true,
+                      fillColor: dialogCardColor,
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: maroon, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (errorText != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      errorText!,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.redAccent),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () => Navigator.pop(dialogContext),
+                child: Text('Cancel',
+                    style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+              ),
+              TextButton(
+                onPressed: moveInDate == null || isSubmitting
+                    ? null
+                    : () async {
+                  setDialogState(() {
+                    isSubmitting = true;
+                    errorText = null;
+                  });
+                  // Capture these BEFORE the await so we don't
+                  // touch context across an async gap.
+                  final messenger = ScaffoldMessenger.of(this.context);
+                  final navigator = Navigator.of(dialogContext);
+
+                  try {
+                    await BookingService().createRequest(
+                      hostelId: _hostel['id'] as String,
+                      roomId: room['id'] as String,
+                      moveInDate: moveInDate!,
+                      message: messageCtrl.text,
+                    );
+
+                    if (!mounted) return;
+                    navigator.pop();
+
+                    setState(() =>
+                        _requestedRooms.add(room['number'] as String));
+
+                    // Refresh the hostel so any server-side change (e.g.
+                    // seat counts updated by the warden) is reflected.
+                    _refreshFromBackend();
+
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isSeatRequest
+                              ? 'Seat request sent for Room ${room['number']}! '
+                              'The warden will assign you a seat.'
+                              : 'Request sent for Room ${room['number']}! '
+                              'The warden will respond soon.',
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+                    setDialogState(() {
+                      isSubmitting = false;
+                      errorText =
+                          e.toString().replaceFirst('Exception: ', '');
+                    });
+                  }
+                },
+                style: TextButton.styleFrom(foregroundColor: maroon),
+                child: isSubmitting
+                    ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(maroon),
+                  ),
+                )
+                    : const Text('Send Request',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -421,142 +433,124 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5);
     final fg = isDark ? const Color(0xFFF3E6D5) : const Color(0xFF800020);
+    final cardColor = isDark ? const Color(0xFF262B33) : Colors.white;
     final hostel = _hostel;
     final photos = (hostel['photos'] as List?)?.cast<String>() ?? const [];
     final facilities =
         (hostel['facilities'] as List?)?.cast<String>() ?? const [];
 
+    // No AppBar here on purpose — the photo carousel bleeds to the very
+    // top of the screen (behind the status bar) and carries its own
+    // back / save buttons as an overlay so they stay legible over
+    // whatever photo is showing.
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: fg, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isSaved ? Icons.favorite : Icons.favorite_border,
-              color: maroon,
-            ),
-            onPressed: _isTogglingSave ? null : _toggleSave,
-          ),
-        ],
-        bottom: _isRefreshing
-            ? const PreferredSize(
-          preferredSize: Size.fromHeight(2),
-          child: LinearProgressIndicator(
-            minHeight: 2,
-            backgroundColor: Colors.transparent,
-            valueColor: AlwaysStoppedAnimation(maroon),
-          ),
-        )
-            : null,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPhotoCarousel(photos),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(fg, hostel),
-                          const SizedBox(height: 18),
-                          _buildQuickStats(),
-                          const SizedBox(height: 24),
-                          _sectionTitle('Facilities', fg),
-                          const SizedBox(height: 12),
-                          _buildFacilities(facilities),
-                          const SizedBox(height: 24),
-                          _sectionTitle('Rooms & Availability', fg),
-                          const SizedBox(height: 6),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPhotoCarousel(photos),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(fg, hostel),
+                        const SizedBox(height: 18),
+                        _buildQuickStats(isDark, cardColor),
+                        const SizedBox(height: 24),
+                        _sectionTitle('Facilities', fg),
+                        const SizedBox(height: 12),
+                        _buildFacilities(facilities),
+                        const SizedBox(height: 24),
+                        _sectionTitle('Rooms & Availability', fg),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Rent and advance shown are per room, or per seat for shared listings.',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: fg.withValues(alpha: 0.5)),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_rooms.isEmpty)
                           Text(
-                            'Rent and advance shown are per room, or per seat for shared listings.',
+                            'No rooms listed yet.',
                             style: TextStyle(
                                 fontSize: 12,
                                 color: fg.withValues(alpha: 0.5)),
-                          ),
-                          const SizedBox(height: 12),
-                          if (_rooms.isEmpty)
-                            Text(
-                              'No rooms listed yet.',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: fg.withValues(alpha: 0.5)),
-                            )
-                          else
-                            ..._rooms.map(
-                                  (room) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _DetailRoomCard(
-                                  room: room,
-                                  available: _isRoomAvailable(room),
-                                  requested:
-                                  _requestedRooms.contains(room['number']),
-                                  onRequest: () => _requestBooking(room),
-                                ),
+                          )
+                        else
+                          ..._rooms.map(
+                                (room) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _DetailRoomCard(
+                                room: room,
+                                available: _isRoomAvailable(room),
+                                requested:
+                                _requestedRooms.contains(room['number']),
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                onRequest: () => _requestBooking(room),
                               ),
                             ),
-                          const SizedBox(height: 24),
-                          _sectionTitle('Location', fg),
-                          const SizedBox(height: 10),
-                          _buildAddress(fg, hostel),
-                        ],
-                      ),
+                          ),
+                        const SizedBox(height: 24),
+                        _sectionTitle('Location', fg),
+                        const SizedBox(height: 10),
+                        _buildAddress(fg, hostel, isDark, cardColor),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            _buildContactBar(hostel),
-          ],
-        ),
+          ),
+          _buildContactBar(hostel),
+        ],
       ),
     );
   }
 
   Widget _buildPhotoCarousel(List<String> photos) {
-    if (photos.isEmpty) {
-      return Container(
-        height: 220,
-        width: double.infinity,
-        color: maroon.withValues(alpha: 0.1),
-        child: Icon(Icons.home_work_outlined,
-            size: 56, color: maroon.withValues(alpha: 0.35)),
-      );
-    }
+    // Extra height plus the status-bar inset so the image reaches the
+    // very top edge of the screen instead of stopping below an app bar.
+    final topInset = MediaQuery.of(context).padding.top;
+    final carouselHeight = 260 + topInset;
+
     return SizedBox(
-      height: 220,
+      height: carouselHeight,
       child: Stack(
+        fit: StackFit.expand,
         children: [
-          PageView.builder(
-            controller: _photoController,
-            itemCount: photos.length,
-            onPageChanged: (i) => setState(() => _currentPhoto = i),
-            itemBuilder: (context, i) => Image.network(
-              photos[i],
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stack) => Container(
-                color: maroon.withValues(alpha: 0.1),
-                child: Icon(Icons.broken_image_outlined,
-                    color: maroon.withValues(alpha: 0.35)),
+          if (photos.isEmpty)
+            Container(
+              color: maroon.withValues(alpha: 0.1),
+              child: Icon(Icons.home_work_outlined,
+                  size: 56, color: maroon.withValues(alpha: 0.35)),
+            )
+          else
+            PageView.builder(
+              controller: _photoController,
+              itemCount: photos.length,
+              onPageChanged: (i) => setState(() => _currentPhoto = i),
+              itemBuilder: (context, i) => Image.network(
+                photos[i],
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stack) => Container(
+                  color: maroon.withValues(alpha: 0.1),
+                  child: Icon(Icons.broken_image_outlined,
+                      color: maroon.withValues(alpha: 0.35)),
+                ),
               ),
             ),
-          ),
           if (photos.length > 1)
             Positioned(
-              bottom: 12,
+              bottom: 16,
               left: 0,
               right: 0,
               child: Row(
@@ -577,7 +571,55 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                 }),
               ),
             ),
+          if (_isRefreshing)
+            Positioned(
+              top: topInset,
+              left: 0,
+              right: 0,
+              child: const LinearProgressIndicator(
+                minHeight: 2,
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation(maroon),
+              ),
+            ),
+          // Back / save buttons float on the image itself so they're
+          // reachable regardless of scroll position, with a translucent
+          // dark backdrop that keeps them visible over any photo.
+          Positioned(
+            top: topInset + 8,
+            left: 16,
+            child: _photoOverlayButton(
+              icon: Icons.arrow_back_ios_new,
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
+            top: topInset + 8,
+            right: 16,
+            child: _photoOverlayButton(
+              icon: _isSaved ? Icons.favorite : Icons.favorite_border,
+              onTap: _isTogglingSave ? null : _toggleSave,
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _photoOverlayButton({
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.35),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
       ),
     );
   }
@@ -630,14 +672,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     );
   }
 
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(bool isDark, Color cardColor) {
     final starting = _hostel['startingPrice'] as int? ?? 0;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withValues(alpha: 0.05),
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -723,13 +771,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     );
   }
 
-  Widget _buildAddress(Color fg, Map<String, dynamic> hostel) {
+  Widget _buildAddress(
+      Color fg, Map<String, dynamic> hostel, bool isDark, Color cardColor) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withValues(alpha: 0.05),
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,30 +816,48 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   }
 
   Widget _buildContactBar(Map<String, dynamic> hostel) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hasWhatsapp = ((hostel['whatsapp'] as String?) ?? '').isNotEmpty;
     final hasChat = hostel['inAppChat'] == true;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1D2128) : const Color(0xFFF3E6D5),
-        border: Border(top: BorderSide(color: maroon.withValues(alpha: 0.1))),
-      ),
-      child: Row(
-        children: [
-          _contactIconButton(
-              Icons.call_outlined, 'Call', () => _contactAction('Call')),
-          if (hasWhatsapp) ...[
-            const SizedBox(width: 10),
-            _contactIconButton(Icons.chat_outlined, 'WhatsApp',
-                    () => _contactAction('WhatsApp')),
-          ],
-          if (hasChat) ...[
-            const SizedBox(width: 10),
-            _contactIconButton(Icons.forum_outlined, 'Chat',
-                    () => _contactAction('In-app chat')),
-          ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [maroon, maroonDark],
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: maroon.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
         ],
+      ),
+      // top: false — the bar's own gradient already paints behind the
+      // home indicator; SafeArea here only pushes the buttons up so
+      // they aren't obscured by it.
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          child: Row(
+            children: [
+              _contactIconButton(
+                  Icons.call_outlined, 'Call', () => _contactAction('Call')),
+              if (hasWhatsapp) ...[
+                const SizedBox(width: 10),
+                _contactIconButton(Icons.chat_outlined, 'WhatsApp',
+                        () => _contactAction('WhatsApp')),
+              ],
+              if (hasChat) ...[
+                const SizedBox(width: 10),
+                _contactIconButton(Icons.forum_outlined, 'Chat',
+                        () => _contactAction('In-app chat')),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -794,14 +867,15 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       child: OutlinedButton.icon(
         onPressed: onTap,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: maroon.withValues(alpha: 0.4)),
+          backgroundColor: Colors.white.withValues(alpha: 0.15),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.6)),
           padding: const EdgeInsets.symmetric(vertical: 12),
           shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        icon: Icon(icon, size: 16, color: maroon),
+        icon: Icon(icon, size: 16, color: Colors.white),
         label:
-        Text(label, style: const TextStyle(color: maroon, fontSize: 12)),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
       ),
     );
   }
@@ -817,12 +891,16 @@ class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
   final bool requested;
+  final bool isDark;
+  final Color cardColor;
   final VoidCallback onRequest;
 
   const _DetailRoomCard({
     required this.room,
     required this.available,
     required this.requested,
+    required this.isDark,
+    required this.cardColor,
     required this.onRequest,
   });
 
@@ -839,9 +917,15 @@ class _DetailRoomCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: maroon.withValues(alpha: 0.05),
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: maroon.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
