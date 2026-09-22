@@ -657,15 +657,15 @@ class _RequestCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.purple.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Seat',
-                    style: TextStyle(
-                      fontSize: 9,
+                  child: Text(
+                    '${(request['seatCount'] as int?) ?? 1} seat${((request['seatCount'] as int?) ?? 1) == 1 ? '' : 's'} requested',
+                    style: const TextStyle(
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.purple,
                     ),
@@ -674,6 +674,27 @@ class _RequestCard extends StatelessWidget {
               ],
             ],
           ),
+          if (request['seatRequested'] == true) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.event_seat_outlined,
+                  size: 14,
+                  color: Colors.purple,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Seats requested: ${(request['seatCount'] as int?) ?? 1}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.purple,
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 6),
           Row(
             children: [

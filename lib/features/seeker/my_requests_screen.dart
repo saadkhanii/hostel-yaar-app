@@ -512,15 +512,15 @@ class _MyRequestCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.purple.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Seat',
-                    style: TextStyle(
-                      fontSize: 9,
+                  child: Text(
+                    '${(request['seatCount'] as int?) ?? 1} seat${((request['seatCount'] as int?) ?? 1) == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.purple,
                     ),

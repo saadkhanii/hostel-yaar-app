@@ -19,6 +19,7 @@ class BookingService {
     required String roomId,
     required DateTime moveInDate,
     String? message,
+    int seatCount = 1,
   }) async {
     try {
       final response = await _dio.post('/booking-requests', data: {
@@ -27,6 +28,7 @@ class BookingService {
         'move_in_date': moveInDate.toIso8601String(),
         if (message != null && message.trim().isNotEmpty)
           'message': message.trim(),
+        'seat_count': seatCount,
       });
       return _fromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
@@ -118,6 +120,7 @@ class BookingService {
       'hostelId': raw['hostel_id'],
       'roomId': raw['room_id'],
       'seatRequested': raw['seat_requested'] ?? false,
+      'seatCount': raw['seat_count'] ?? 1,
       'moveInDate': raw['move_in_date'],
       'message': raw['message'],
       'wardenReply': raw['warden_reply'],

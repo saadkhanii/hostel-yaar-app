@@ -61,7 +61,8 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   late Map<String, dynamic> _hostel;
   bool _isRefreshing = false;
-  final Set<String> _requestedRooms = {};
+  /// roomNumber -> pending seat count for that room.
+  final Map<String, int> _requestedRooms = {};
 
   static const Map<String, IconData> _facilityIcons = {
     'WiFi': Icons.wifi,
@@ -101,7 +102,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       final results = await Future.wait([
         _hostelService.getHostel(id),
         _isSavedOnServer(id),
-        _pendingRoomNumbersFor(id),
+        _pendingRoomSeatsFor(id),
       ]);
 
       if (!mounted) return;
@@ -110,7 +111,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         _isSaved = results[1] as bool;
         _requestedRooms
           ..clear()
-          ..addAll(results[2] as Set<String>);
+          ..addAll(results[2] as Map<String, int>);
         _isRefreshing = false;
       });
     } catch (_) {
@@ -118,19 +119,24 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     }
   }
 
-  /// Room numbers the current seeker already has a pending request for,
-  /// in this specific hostel.
-  Future<Set<String>> _pendingRoomNumbersFor(String hostelId) async {
+  /// Map of roomNumber -> total pending seat_count for that room, in
+  /// this hostel. Used to disable/adjust the max in the request dialog
+  /// and to show the "Requested" state on the room card.
+  Future<Map<String, int>> _pendingRoomSeatsFor(String hostelId) async {
     try {
       final requests = await BookingService().listMyRequests();
-      return requests
-          .where((r) =>
-      r['hostelId'] == hostelId && r['status'] == 'pending')
-          .map((r) => (r['roomNumber'] as String?) ?? '')
-          .where((s) => s.isNotEmpty)
-          .toSet();
+      final result = <String, int>{};
+      for (final r in requests) {
+        if (r['hostelId'] != hostelId) continue;
+        if (r['status'] != 'pending') continue;
+        final number = (r['roomNumber'] as String?) ?? '';
+        if (number.isEmpty) continue;
+        final count = (r['seatCount'] as int?) ?? 1;
+        result[number] = (result[number] ?? 0) + count;
+      }
+      return result;
     } catch (_) {
-      return <String>{};
+      return <String, int>{};
     }
   }
 
@@ -199,13 +205,19 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final messageCtrl = TextEditingController();
     bool isSubmitting = false;
     String? errorText;
+
     final isSeatRequest = room['bookingType'] == 'Seat';
     final availableSeats = (room['availableSeats'] as int?) ?? 0;
+    final pendingSeats = _requestedRooms[room['number']] ?? 0;
+    final remainingSeats = (availableSeats - pendingSeats).clamp(0, availableSeats);
+
+    int seatCount = 1;
     final dialogTitle = isSeatRequest ? 'Request a Seat' : 'Request to Book';
     final dialogBody = isSeatRequest
-        ? 'Send a request to book a seat in Room ${room['number']} at ${_hostel['name']}? There are $availableSeats seat${availableSeats == 1 ? '' : 's'} available. The warden will assign you one.'
+        ? (pendingSeats > 0
+        ? 'Add another seat request for Room ${room['number']} at ${_hostel['name']}? $remainingSeats seat${remainingSeats == 1 ? '' : 's'} still available.'
+        : 'Send a request to book a seat in Room ${room['number']} at ${_hostel['name']}? There are $availableSeats seat${availableSeats == 1 ? '' : 's'} available.')
         : 'Send a booking request for the whole of Room ${room['number']} at ${_hostel['name']}? The warden will confirm availability before you pay any advance.';
-
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -236,6 +248,56 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     dialogBody,
                     style: TextStyle(color: maroon.withValues(alpha: 0.75)),
                   ),
+                  if (isSeatRequest) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Number of seats',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: maroon,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: maroon.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: maroon.withValues(alpha: 0.2)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: seatCount,
+                          isExpanded: true,
+                          dropdownColor: Theme.of(context).brightness ==
+                              Brightness.dark
+                              ? const Color(0xFF1D2128)
+                              : const Color(0xFFF3E6D5),
+                          icon: const Icon(Icons.keyboard_arrow_down,
+                              color: maroon),
+                          style: const TextStyle(fontSize: 14, color: maroon),
+                          items: List.generate(remainingSeats, (i) => i + 1)
+                              .map((n) => DropdownMenuItem<int>(
+                            value: n,
+                            child: Text(
+                              n == 1 ? '1 seat' : '$n seats',
+                              style: const TextStyle(
+                                  color: maroon,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v != null) {
+                              setDialogState(() => seatCount = v);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text(
                     'When do you want to move in?',
@@ -369,24 +431,27 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                       roomId: room['id'] as String,
                       moveInDate: moveInDate!,
                       message: messageCtrl.text,
+                      seatCount: isSeatRequest ? seatCount : 1,
                     );
 
                     if (!mounted) return;
                     navigator.pop();
 
-                    setState(() =>
-                        _requestedRooms.add(room['number'] as String));
+                    setState(() {
+                      final key = room['number'] as String;
+                      final add = isSeatRequest ? seatCount : 1;
+                      _requestedRooms[key] =
+                          (_requestedRooms[key] ?? 0) + add;
+                    });
 
-                    // Refresh the hostel so any server-side change (e.g.
-                    // seat counts updated by the warden) is reflected.
                     _refreshFromBackend();
 
                     messenger.showSnackBar(
                       SnackBar(
                         content: Text(
                           isSeatRequest
-                              ? 'Seat request sent for Room ${room['number']}! '
-                              'The warden will assign you a seat.'
+                              ? '${seatCount == 1 ? 'Seat' : '$seatCount seats'} '
+                              'requested for Room ${room['number']}!'
                               : 'Request sent for Room ${room['number']}! '
                               'The warden will respond soon.',
                         ),
@@ -487,15 +552,15 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                           ..._rooms.map(
                                 (room) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child: _DetailRoomCard(
-                                room: room,
-                                available: _isRoomAvailable(room),
-                                requested:
-                                _requestedRooms.contains(room['number']),
-                                isDark: isDark,
-                                cardColor: cardColor,
-                                onRequest: () => _requestBooking(room),
-                              ),
+                                  child: _DetailRoomCard(
+                                    room: room,
+                                    available: _isRoomAvailable(room),
+                                    pendingSeats:
+                                    _requestedRooms[room['number']] ?? 0,
+                                    isDark: isDark,
+                                    cardColor: cardColor,
+                                    onRequest: () => _requestBooking(room),
+                                  ),
                             ),
                           ),
                         const SizedBox(height: 24),
@@ -887,10 +952,11 @@ Widget _sectionTitle(String title, Color fg) => Text(
 );
 
 // ── Room Card (seeker-facing, read-only + request action) ──────────────
+// ── Room Card (seeker-facing, read-only + request action) ──────────────
 class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
-  final bool requested;
+  final int pendingSeats;
   final bool isDark;
   final Color cardColor;
   final VoidCallback onRequest;
@@ -898,7 +964,7 @@ class _DetailRoomCard extends StatelessWidget {
   const _DetailRoomCard({
     required this.room,
     required this.available,
-    required this.requested,
+    required this.pendingSeats,
     required this.isDark,
     required this.cardColor,
     required this.onRequest,
@@ -913,6 +979,17 @@ class _DetailRoomCard extends StatelessWidget {
     final advance = (room['advance'] as int?) ?? 0;
     final seats = (room['availableSeats'] as int?) ?? 0;
     final type = (room['roomType'] as int?) ?? 0;
+
+    final totalSeats = seats;
+    final isLocked = !available ||
+        (!isSeatRoom && pendingSeats > 0) ||
+        (isSeatRoom && pendingSeats >= totalSeats);
+
+    final label = isLocked
+        ? (pendingSeats > 0 ? 'Requested' : 'Unavailable')
+        : (pendingSeats > 0
+        ? 'Request Again'
+        : (isSeatRoom ? 'Request a Seat' : 'Request to Book'));
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -961,6 +1038,25 @@ class _DetailRoomCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isSeatRoom && pendingSeats > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$pendingSeats requested',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.purple,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
@@ -994,11 +1090,11 @@ class _DetailRoomCard extends StatelessWidget {
                 ),
               ),
               ElevatedButton(
-                onPressed: (available && !requested) ? onRequest : null,
+                onPressed: isLocked ? null : onRequest,
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                  requested ? Colors.green.withValues(alpha: 0.15) : maroon,
-                  disabledBackgroundColor: requested
+                  pendingSeats > 0 ? Colors.green.withValues(alpha: 0.15) : maroon,
+                  disabledBackgroundColor: pendingSeats > 0
                       ? Colors.green.withValues(alpha: 0.15)
                       : maroon.withValues(alpha: 0.25),
                   padding:
@@ -1009,19 +1105,16 @@ class _DetailRoomCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (requested) ...[
+                    if (pendingSeats > 0) ...[
                       Icon(Icons.check_circle,
                           size: 14, color: Colors.green[800]),
                       const SizedBox(width: 4),
                     ],
                     Text(
-                      requested
-                          ? 'Requested'
-                          : (available
-                          ? (isSeatRoom ? 'Request a Seat' : 'Request to Book')
-                          : 'Unavailable'),
+                      label,
                       style: TextStyle(
-                        color: requested ? Colors.green[800] : Colors.white,
+                        color:
+                        pendingSeats > 0 ? Colors.green[800] : Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
