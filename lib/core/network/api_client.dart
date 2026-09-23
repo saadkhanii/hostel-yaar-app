@@ -32,11 +32,72 @@ class ApiClient {
           }
           return handler.next(options);
         },
-        onError: (DioException e, handler) {
-          // Global error hook (e.g. handle 401 by forcing logout)
-          return handler.next(e);
+        onError: (DioException e, handler) async {
+          final status = e.response?.statusCode;
+
+          // Only retry on 401, and never retry the refresh endpoint
+          // itself (avoids infinite loops).
+          final isUnauthorized = status == 401;
+          final isRefreshCall =
+          e.requestOptions.path.contains('/auth/refresh');
+          final alreadyRetried =
+              e.requestOptions.extra['retried_after_refresh'] == true;
+
+          if (!isUnauthorized || isRefreshCall || alreadyRetried) {
+            return handler.next(e);
+          }
+
+          try {
+            // Attempt to get a new access token.
+            final newToken = await _refreshToken();
+
+            // Retry the original request with the new token.
+            final opts = e.requestOptions;
+            opts.headers['Authorization'] = 'Bearer $newToken';
+            opts.extra['retried_after_refresh'] = true;
+
+            final clone = await dio.fetch(opts);
+            return handler.resolve(clone);
+          } catch (_) {
+            // Refresh failed — the refresh token is expired or revoked.
+            // Pass the original 401 up so the UI can react (e.g. the
+            // next screen the user visits will force a logout).
+            return handler.next(e);
+          }
         },
+
       ),
     );
+  }
+  /// Calls /auth/refresh using a bare Dio instance so we don't
+  /// recursively trigger this same interceptor.
+  Future<String> _refreshToken() async {
+    final refresh = await _storage.read(key: 'refresh_token');
+    if (refresh == null || refresh.isEmpty) {
+      throw Exception('No refresh token');
+    }
+
+    // A separate Dio so this call doesn't go through the interceptor.
+    final bareDio = Dio(BaseOptions(
+      baseUrl: dio.options.baseUrl,
+      headers: {'Content-Type': 'application/json'},
+    ));
+
+    final response = await bareDio.post(
+      '/auth/refresh',
+      data: {'refresh_token': refresh},
+    );
+
+    final data = response.data as Map<String, dynamic>;
+    final newAccess = data['access_token'] as String;
+    final newRefresh = data['refresh_token'] as String?;
+
+    // Persist both.
+    await _storage.write(key: 'jwt_token', value: newAccess);
+    if (newRefresh != null && newRefresh.isNotEmpty) {
+      await _storage.write(key: 'refresh_token', value: newRefresh);
+    }
+
+    return newAccess;
   }
 }

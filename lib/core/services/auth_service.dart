@@ -7,6 +7,7 @@ import '../network/api_client.dart';
 /// in different places.
 class _StorageKeys {
   static const token = 'jwt_token';
+  static const refreshToken = 'refresh_token';
   static const userId = 'user_id';
   static const fullName = 'user_full_name';
   static const email = 'user_email';
@@ -154,6 +155,12 @@ class AuthService {
   /// can restore state instantly on next launch without a network call.
   Future<void> _persistSession(Map<String, dynamic> data) async {
     await _storage.write(key: _StorageKeys.token, value: data['access_token']);
+
+    final refresh = data['refresh_token'] as String?;
+    if (refresh != null && refresh.isNotEmpty) {
+      await _storage.write(key: _StorageKeys.refreshToken, value: refresh);
+    }
+
     await _storage.write(key: _StorageKeys.userId, value: data['user_id']);
     await _storage.write(
       key: _StorageKeys.fullName,
@@ -178,6 +185,46 @@ class AuthService {
   }
 
   Future<String?> getToken() => _storage.read(key: _StorageKeys.token);
+  Future<String?> getRefreshToken() =>
+      _storage.read(key: _StorageKeys.refreshToken);
+
+  /// Exchange the stored refresh token for a new access token (and a
+  /// new refresh token, since the backend rotates them). Stores the
+  /// new values and returns the new access token.
+  ///
+  /// Throws if there's no refresh token stored, or if the backend
+  /// rejects it (expired, revoked, user deleted).
+  Future<String> refreshAccessToken() async {
+    final refresh = await _storage.read(key: _StorageKeys.refreshToken);
+    if (refresh == null || refresh.isEmpty) {
+      throw Exception('No refresh token stored');
+    }
+
+    try {
+      final response = await _dio.post(
+        '/auth/refresh',
+        data: {'refresh_token': refresh},
+        // The Dio interceptor normally adds the Authorization header,
+        // but /auth/refresh doesn't need it. It's harmless here.
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final newAccess = data['access_token'] as String;
+      final newRefresh = data['refresh_token'] as String?;
+
+      await _storage.write(key: _StorageKeys.token, value: newAccess);
+      if (newRefresh != null && newRefresh.isNotEmpty) {
+        await _storage.write(
+          key: _StorageKeys.refreshToken,
+          value: newRefresh,
+        );
+      }
+
+      return newAccess;
+    } on DioException catch (e) {
+      throw Exception(_errorMessage(e));
+    }
+  }
 
   Future<String?> getRole() => _storage.read(key: _StorageKeys.role);
 
@@ -275,7 +322,21 @@ class AuthService {
 
   /// Wipes all stored session data. Call on logout.
   Future<void> logout() async {
+    // Revoke the refresh token server-side so it can't be reused.
+    // Do this BEFORE clearing local storage — we need the token.
+    final refresh = await _storage.read(key: _StorageKeys.refreshToken);
+    if (refresh != null && refresh.isNotEmpty) {
+      try {
+        await _dio.post('/auth/logout', data: {'refresh_token': refresh});
+      } catch (_) {
+        // Server-side revocation failed (offline, server down, token
+        // already revoked). Local cleanup still proceeds — the user
+        // is logged out regardless.
+      }
+    }
+
     await _storage.delete(key: _StorageKeys.token);
+    await _storage.delete(key: _StorageKeys.refreshToken);
     await _storage.delete(key: _StorageKeys.userId);
     await _storage.delete(key: _StorageKeys.fullName);
     await _storage.delete(key: _StorageKeys.email);
