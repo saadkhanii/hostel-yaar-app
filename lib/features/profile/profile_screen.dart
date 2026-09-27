@@ -2,11 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../core/services/auth_service.dart';
 import '../../core/services/cloudinary_service.dart';
 import '../../core/services/session_manager.dart';
-import '../../shared/widgets/user_avatar.dart';
+import '../../shared/widgets/avatar.dart';
 
 /// Account screen reached from the drawer. Shows the current user's
 /// info and lets them update their name, phone, and password.
@@ -397,7 +396,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  UserAvatar(
+                  Avatar.current(
                     size: 100,
                     showEditBadge: true,
                     onTap: _isUploadingPhoto ? null : _changeProfilePicture,

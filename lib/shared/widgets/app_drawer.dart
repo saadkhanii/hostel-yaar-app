@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hostel_yaar/shared/widgets/user_avatar.dart';
-
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/auth_service.dart';
@@ -8,6 +6,7 @@ import '../../core/services/session_manager.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import 'avatar.dart';
 import 'notification_badge.dart';
 
 /// Shared right-side drawer for both dashboards. Shows the current
@@ -109,10 +108,10 @@ class _AppDrawerState extends State<AppDrawer> {
                         width: 2,
                       ),
                     ),
-                    child: const UserAvatar(
+                    child: const Avatar.current(
                       size: 52,
                       backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.white,
+                      textColor: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 14),

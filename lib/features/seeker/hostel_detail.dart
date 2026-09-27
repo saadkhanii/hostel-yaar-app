@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../../core/services/booking_service.dart';
+import '../../core/services/chat_service.dart';
 import '../../core/services/hostel_service.dart';
+import '../chat/chat_screen.dart';
 
 // ── Hostel Detail Screen ───────────────────────────────────────────────
 // Shown when a seeker taps a hostel card on the list. Receives a hostel
@@ -116,6 +118,67 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
       });
     } catch (_) {
       if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  bool _isOpeningChat = false;
+
+  /// Opens (or resumes) the chat thread between the current seeker and
+  /// this hostel's warden, scoped to this hostel. The server dedupes by
+  /// (seeker, warden, hostel), so tapping the button twice in a row just
+  /// lands in the same thread.
+  Future<void> _openChatWithWarden() async {
+    if (_isOpeningChat) return;
+
+    final hostelId = _hostel['id'] as String?;
+    final wardenId = _hostel['wardenId'] as String?;
+
+    if (hostelId == null || hostelId.isEmpty ||
+        wardenId == null || wardenId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This hostel has no warden assigned.')),
+      );
+      return;
+    }
+
+    setState(() => _isOpeningChat = true);
+
+    try {
+      final convo = await ChatService().startConversation(
+        otherUserId: wardenId,
+        hostelId: hostelId,
+      );
+
+      if (!mounted) return;
+
+      // Seeker view: header shows the hostel name, subtitle "Warden".
+      // ChatScreen takes these as plain strings, so no other plumbing.
+      final hostelName = _hostel['name'] as String? ?? 'Hostel';
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversationId: convo['id'] as String,
+            name: hostelName,
+            subtitle: 'Warden',
+            online: false,
+            avatarUrl: (_hostel['photos'] as List?)?.isNotEmpty == true
+                ? (_hostel['photos'] as List).first as String
+                : null,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isOpeningChat = false);
     }
   }
 
@@ -917,8 +980,7 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               ],
               if (hasChat) ...[
                 const SizedBox(width: 10),
-                _contactIconButton(Icons.forum_outlined, 'Chat',
-                        () => _contactAction('In-app chat')),
+                _contactIconButton(Icons.forum_outlined, 'Chat', _openChatWithWarden),
               ],
             ],
           ),

@@ -5,9 +5,9 @@ import '../../core/services/auth_service.dart';
 import '../../core/services/hostel_service.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
+import '../../shared/widgets/avatar.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
 import '../../shared/widgets/notification_badge.dart';
-import '../../shared/widgets/user_avatar.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -182,19 +182,14 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                         children: [
                           _HeaderBell(),
                           const SizedBox(width: 12),
-                          UserAvatar(
+                          Avatar.current(
                             size: 46,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.15,
-                            ),
-                            foregroundColor: Colors.white,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              width: 1.5,
-                            ),
-                            onTap: () =>
-                                _scaffoldKey.currentState?.openEndDrawer(),
-                          ),
+                            backgroundColor: Colors.white.withValues(alpha: 0.15),
+                            textColor: Colors.white,
+                            borderColor: Colors.white,
+                            borderWidth: 1.5,
+                            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                          )
                         ],
                       ),
                     ],

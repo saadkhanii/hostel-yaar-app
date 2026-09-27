@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/routes/navigation_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/chat_service.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
+import '../../shared/widgets/avatar.dart';
 import 'chat_screen.dart';
 
 /// Inbox screen listing all conversations for the current user (seeker
@@ -22,68 +24,20 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
   static const maroonDark = Color(0xFF5C0017);
 
   final _searchCtrl = TextEditingController();
+  final _chatService = ChatService();
+
   String _query = '';
   bool _isSeeker = true;
+  bool _loading = true;
+  String? _errorText;
 
-  // TODO: replace with ChatService().listConversations()
-  final List<Map<String, dynamic>> _conversations = [
-    {
-      'id': '1',
-      'name': 'Green Valley Hostel',
-      'subtitle': 'Warden',
-      'lastMessage': 'Your booking request has been approved!',
-      'time': '10:42 AM',
-      'unread': 2,
-      'online': true,
-    },
-    {
-      'id': '2',
-      'name': 'Ahmed Raza',
-      'subtitle': 'Seeker',
-      'lastMessage': 'Is the room still available for June?',
-      'time': '9:15 AM',
-      'unread': 0,
-      'online': false,
-    },
-    {
-      'id': '3',
-      'name': 'City Comfort Hostel',
-      'subtitle': 'Warden',
-      'lastMessage': 'You: Sure, I can visit on Friday.',
-      'time': 'Yesterday',
-      'unread': 0,
-      'online': true,
-    },
-    {
-      'id': '4',
-      'name': 'Bilal Khan',
-      'subtitle': 'Seeker',
-      'lastMessage': 'Thanks for the quick response!',
-      'time': 'Yesterday',
-      'unread': 1,
-      'online': false,
-    },
-    {
-      'id': '5',
-      'name': 'Sunrise Boys Hostel',
-      'subtitle': 'Warden',
-      'lastMessage': 'We have a vacancy opening up next week.',
-      'time': 'Mon',
-      'unread': 0,
-      'online': false,
-    },
-  ];
+  List<Map<String, dynamic>> _conversations = [];
 
   @override
   void initState() {
     super.initState();
     _loadRole();
-  }
-
-  Future<void> _loadRole() async {
-    final role = await AuthService().getRole();
-    if (!mounted) return;
-    setState(() => _isSeeker = role != 'warden');
+    _loadConversations();
   }
 
   @override
@@ -92,28 +46,95 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
     super.dispose();
   }
 
+  Future<void> _loadRole() async {
+    final role = await AuthService().getRole();
+    if (!mounted) return;
+    setState(() => _isSeeker = role != 'warden');
+  }
+
+  Future<void> _loadConversations() async {
+    setState(() {
+      _loading = true;
+      _errorText = null;
+    });
+    try {
+      final list = await _chatService.listConversations();
+      if (!mounted) return;
+      setState(() {
+        _conversations = list;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorText = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
   List<Map<String, dynamic>> get _filtered {
     if (_query.trim().isEmpty) return _conversations;
     final q = _query.toLowerCase();
-    return _conversations
-        .where((c) => (c['name'] as String).toLowerCase().contains(q))
-        .toList();
+    return _conversations.where((c) {
+      final name = (c['displayName'] as String? ?? '').toLowerCase();
+      return name.contains(q);
+    }).toList();
   }
 
-  int get _totalUnread =>
-      _conversations.fold(0, (sum, c) => sum + (c['unread'] as int));
+  int get _totalUnread => _conversations.fold<int>(
+    0,
+    (sum, c) => sum + ((c['unreadCount'] as int?) ?? 0),
+  );
+  String _relativeTime(String? iso) {
+    if (iso == null) return '';
+    final dt = DateTime.tryParse(iso)?.toLocal();
+    if (dt == null) return '';
 
-  void _openChat(Map<String, dynamic> convo) {
-    Navigator.of(context).push(
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m';
+    if (diff.inHours < 24 &&
+        dt.day == now.day &&
+        dt.month == now.month &&
+        dt.year == now.year) {
+      final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final m = dt.minute.toString().padLeft(2, '0');
+      return '$h:$m ${dt.hour >= 12 ? 'PM' : 'AM'}';
+    }
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    if (dt.year == now.year) return '${dt.day} ${months[dt.month - 1]}';
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  Future<void> _openChat(Map<String, dynamic> convo) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           conversationId: convo['id'] as String,
-          name: convo['name'] as String,
-          subtitle: convo['subtitle'] as String,
-          online: convo['online'] as bool,
+          name: convo['displayName'] as String? ?? '',
+          subtitle: convo['subtitle'] as String? ?? '',
+          online: false, // presence not implemented yet
+          avatarUrl: convo['avatarUrl'] as String?,
         ),
       ),
     );
+
+    if (mounted) _loadConversations();
   }
 
   void _onTabTap(AppTab tab) {
@@ -124,7 +145,6 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
         );
         break;
       case AppTab.chat:
-      // Already here.
         break;
       case AppTab.saved:
         if (_isSeeker) {
@@ -239,7 +259,10 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search, color: maroon.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.search,
+                          color: maroon.withValues(alpha: 0.5),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: TextField(
@@ -253,8 +276,9 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                               ),
                               border: InputBorder.none,
                               isDense: true,
-                              contentPadding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -266,26 +290,43 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
               ),
             ),
             Expanded(
-              child: _filtered.isEmpty
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(maroon),
+                      ),
+                    )
+                  : _errorText != null
+                  ? _ErrorState(
+                      message: _errorText!,
+                      onRetry: _loadConversations,
+                      fg: fg,
+                    )
+                  : _filtered.isEmpty
                   ? _EmptyState(isDark: isDark, cardColor: cardColor, fg: fg)
                   : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                itemCount: _filtered.length,
-                itemBuilder: (context, i) {
-                  final c = _filtered[i];
-                  return _ConversationTile(
-                    name: c['name'] as String,
-                    subtitle: c['subtitle'] as String,
-                    lastMessage: c['lastMessage'] as String,
-                    time: c['time'] as String,
-                    unread: c['unread'] as int,
-                    online: c['online'] as bool,
-                    isDark: isDark,
-                    cardColor: cardColor,
-                    onTap: () => _openChat(c),
-                  );
-                },
-              ),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, i) {
+                        final c = _filtered[i];
+                        return _ConversationTile(
+                          name: (c['displayName'] as String?) ?? '',
+                          subtitle: (c['subtitle'] as String?) ?? '',
+                          avatarUrl: c['avatarUrl'] as String?,
+                          lastMessage:
+                              ((c['lastMessageText'] as String?)?.isNotEmpty ??
+                                  false)
+                              ? c['lastMessageText'] as String
+                              : 'No messages yet',
+                          time: _relativeTime(c['lastMessageAt'] as String?),
+                          unread: (c['unreadCount'] as int?) ?? 0,
+                          online: false,
+                          isDark: isDark,
+                          cardColor: cardColor,
+                          onTap: () => _openChat(c),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -303,6 +344,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
 class _ConversationTile extends StatelessWidget {
   final String name;
   final String subtitle;
+  final String? avatarUrl;
   final String lastMessage;
   final String time;
   final int unread;
@@ -314,6 +356,7 @@ class _ConversationTile extends StatelessWidget {
   const _ConversationTile({
     required this.name,
     required this.subtitle,
+    required this.avatarUrl,
     required this.lastMessage,
     required this.time,
     required this.unread,
@@ -354,7 +397,13 @@ class _ConversationTile extends StatelessWidget {
                 Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    _InitialsAvatar(name: name, size: 48),
+                    Avatar(
+                      name: name,
+                      imageUrl: avatarUrl,
+                      size: 48,
+                      backgroundColor: maroon.withValues(alpha: 0.12),
+                      textColor: maroon,
+                    ),
                     if (online)
                       Positioned(
                         right: 0,
@@ -482,43 +531,6 @@ class _ConversationTile extends StatelessWidget {
   }
 }
 
-// ── Initials Avatar ──────────────────────────────────────────────────────
-class _InitialsAvatar extends StatelessWidget {
-  final String name;
-  final double size;
-
-  const _InitialsAvatar({required this.name, required this.size});
-
-  String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return '?';
-    final first = parts.first[0];
-    final second = parts.length > 1 ? parts[1][0] : '';
-    return (first + second).toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const maroon = Color(0xFF800020);
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: maroon.withValues(alpha: 0.12),
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        _initials,
-        style: TextStyle(
-          fontSize: size * 0.36,
-          fontWeight: FontWeight.w700,
-          color: maroon,
-        ),
-      ),
-    );
-  }
-}
 
 // ── Empty State ─────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
@@ -567,6 +579,69 @@ class _EmptyState extends StatelessWidget {
               'Messages with hostels and wardens will show up here.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.55)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Error State ─────────────────────────────────────────────────────────
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  final Color fg;
+
+  const _ErrorState({
+    required this.message,
+    required this.onRetry,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const maroon = Color(0xFF800020);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: maroon.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 36,
+                color: maroon.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Could not load conversations',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.55)),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text(
+                'Retry',
+                style: TextStyle(color: maroon, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),
