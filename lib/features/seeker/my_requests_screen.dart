@@ -30,8 +30,8 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
       case AppTab.home:
         NavigationService.navigateAndRemoveUntil(AppRoutes.seekerHome);
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       case AppTab.saved:
         NavigationService.navigateTo(AppRoutes.savedHostels);

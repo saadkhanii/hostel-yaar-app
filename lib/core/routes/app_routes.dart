@@ -23,6 +23,7 @@ class AppRoutes {
   static const savedHostels = '/saved-hostels';
   static const myRequests = '/my-requests';
   static const notifications = '/notifications';
+  static const chatInbox = '/chat-inbox';
 
 // Add more routes as needed
 }

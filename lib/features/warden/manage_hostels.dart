@@ -32,8 +32,8 @@ class _ManageHostelsScreenState extends State<ManageHostelsScreen> {
       case AppTab.requests:
         NavigationService.navigateTo(AppRoutes.wardenRequests);
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       default:
         break;

@@ -7,6 +7,7 @@ import 'package:hostel_yaar/features/auth/forgot_password.dart';
 import 'package:hostel_yaar/features/auth/otp.dart';
 import 'package:hostel_yaar/features/auth/reset_password.dart'; // ← NEW
 
+import '../../features/chat/chat_inbox_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/seeker/my_requests_screen.dart';
 import '../../features/seeker/seeker_dashboard.dart';
@@ -98,6 +99,9 @@ class AppRouter {
 
       case AppRoutes.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationsScreen());
+
+      case AppRoutes.chatInbox:
+        return MaterialPageRoute(builder: (_) => const ChatInboxScreen());
 
       default:
         return MaterialPageRoute(

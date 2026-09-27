@@ -6,6 +6,7 @@ import '../../core/services/hostel_service.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
+import '../../shared/widgets/notification_badge.dart';
 import '../../shared/widgets/user_avatar.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
@@ -47,7 +48,6 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
       _userName = name ?? 'there';
     });
   }
-
 
   @override
   void dispose() {
@@ -96,10 +96,10 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   void _onTabTap(AppTab tab) {
     switch (tab) {
       case AppTab.home:
-      // Already here.
+        // Already here.
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       case AppTab.saved:
         NavigationService.navigateTo(AppRoutes.savedHostels);
@@ -178,16 +178,24 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                           ),
                         ],
                       ),
-                      UserAvatar(
-                        size: 46,
-                        backgroundColor: Colors.white.withValues(alpha: 0.15),
-                        foregroundColor: Colors.white,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 1.5,
-                        ),
-                        onTap: () =>
-                            _scaffoldKey.currentState?.openEndDrawer(),
+                      Row(
+                        children: [
+                          _HeaderBell(),
+                          const SizedBox(width: 12),
+                          UserAvatar(
+                            size: 46,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.15,
+                            ),
+                            foregroundColor: Colors.white,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              width: 1.5,
+                            ),
+                            onTap: () =>
+                                _scaffoldKey.currentState?.openEndDrawer(),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -948,6 +956,35 @@ class _HostelListTile extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderBell extends StatelessWidget {
+  const _HeaderBell();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => NavigationService.navigateTo(AppRoutes.notifications),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.6),
+            width: 1.5,
+          ),
+        ),
+        child: const NotificationBadge(
+          child: Icon(
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22,
           ),
         ),
       ),

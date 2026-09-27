@@ -39,8 +39,8 @@ class _WardenRequestsScreenState extends State<WardenRequestsScreen> {
       case AppTab.requests:
       // Already here.
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       default:
         break;

@@ -31,8 +31,8 @@ class _SavedHostelsScreenState extends State<SavedHostelsScreen> {
       case AppTab.home:
         NavigationService.navigateAndRemoveUntil(AppRoutes.seekerHome);
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       case AppTab.saved:
       // Already here.

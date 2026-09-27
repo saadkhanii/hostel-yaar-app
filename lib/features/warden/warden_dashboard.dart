@@ -7,6 +7,7 @@ import '../../core/services/booking_service.dart';
 import '../../core/services/hostel_service.dart';
 import '../../shared/widgets/app_bottom_nav.dart';
 import '../../shared/widgets/app_drawer.dart';
+import '../../shared/widgets/notification_badge.dart';
 import '../../shared/widgets/user_avatar.dart';
 
 class WardenDashboard extends StatefulWidget {
@@ -76,7 +77,6 @@ class _WardenDashboardState extends State<WardenDashboard> {
     }
   }
 
-  void _openDrawer() => _scaffoldKey.currentState?.openEndDrawer();
 
   void _onWardenTabTap(AppTab tab) {
     switch (tab) {
@@ -88,8 +88,8 @@ class _WardenDashboardState extends State<WardenDashboard> {
       case AppTab.requests:
         NavigationService.navigateTo(AppRoutes.wardenRequests);
         break;
-      case AppTab.alerts:
-        NavigationService.navigateTo(AppRoutes.notifications);
+      case AppTab.chat:
+        NavigationService.navigateTo(AppRoutes.chatInbox);
         break;
       default:
         break;
@@ -200,15 +200,21 @@ class _WardenDashboardState extends State<WardenDashboard> {
                           ),
                         ],
                       ),
-                      UserAvatar(
-                        size: 46,
-                        backgroundColor: Colors.white.withValues(alpha: 0.15),
-                        foregroundColor: Colors.white,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          width: 1.5,
-                        ),
-                        onTap: _openDrawer,
+                      Row(
+                        children: [
+                          _HeaderBell(),
+                          const SizedBox(width: 12),
+                          UserAvatar(
+                            size: 46,
+                            backgroundColor: Colors.white.withValues(alpha: 0.15),
+                            foregroundColor: Colors.white,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              width: 1.5,
+                            ),
+                            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -636,6 +642,34 @@ class _ActivityTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+class _HeaderBell extends StatelessWidget {
+  const _HeaderBell();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => NavigationService.navigateTo(AppRoutes.notifications),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.6),
+            width: 1.5,
+          ),
+        ),
+        child: const NotificationBadge(
+          child: Icon(
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
       ),
     );
   }
