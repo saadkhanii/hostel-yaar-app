@@ -106,7 +106,7 @@ class _AiSearchScreenState extends State<AiSearchScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      body: Column(                       // <-- no SafeArea wrapper
+      body: Column(
         children: [
           _buildHeader(context),
           Expanded(

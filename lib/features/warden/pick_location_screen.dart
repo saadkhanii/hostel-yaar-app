@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/services/geocode_service.dart';
 
-/// Result handed back to the caller when the warden confirms a location.
+// Result handed back to the caller when the warden confirms a location.
 class PickedLocation {
   final double latitude;
   final double longitude;
@@ -17,14 +18,16 @@ class PickedLocation {
   });
 }
 
-/// Full-screen location picker.
-///
-/// 1. Wardens see a map centred on [initial] (or Lahore by default).
-/// 2. Tapping anywhere moves the pin.
-/// 3. Tapping "Save Location" reverse-geocodes the pin via the backend
-///    and pops with a [PickedLocation].
-///
-/// Popping without saving returns null.
+// Full-screen location picker.
+//
+// 1. Wardens see a map centred on [initial] (or Lahore by default).
+// 2. Tapping anywhere moves the pin.
+// 3. Tapping the "my location" FAB asks for GPS permission and jumps
+//    the map to the device's current position.
+// 4. Tapping "Save Location" reverse-geocodes the pin via the backend
+//    and pops with a [PickedLocation].
+//
+// Popping without saving returns null.
 class PickLocationScreen extends StatefulWidget {
   final LatLng? initial;
 
@@ -45,6 +48,7 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
 
   late LatLng _picked;
   bool _saving = false;
+  bool _isLocating = false;
 
   @override
   void initState() {
@@ -94,6 +98,82 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
     }
   }
 
+  // Asks the OS for the device's current position and moves the map
+  // there, dropping the pin at the same spot. Handles every permission
+  // state the user can land in, including "denied forever".
+  Future<void> _goToMyLocation() async {
+    setState(() => _isLocating = true);
+
+    try {
+      // 1. Is GPS / location service even turned on?
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please turn on location services (GPS).'),
+          ),
+        );
+        return;
+      }
+
+      // 2. Have we been granted permission before?
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permission denied.')),
+        );
+        return;
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location permission permanently denied. '
+                  'Enable it in Settings to use this feature.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // 3. Grab the position. 10s timeout so we don't hang forever
+      // indoors with a bad signal.
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      if (!mounted) return;
+
+      final here = LatLng(position.latitude, position.longitude);
+      _mapController.move(here, 16);
+      setState(() => _picked = here);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not get your location: '
+                '${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -101,69 +181,85 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: _picked,
-                      initialZoom: 15,
-                      onTap: _onTap,
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _picked,
+                    initialZoom: 15,
+                    onTap: _onTap,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      // OSM requires a package identifier in the UA.
+                      // Replace with your real bundle id at release.
+                      userAgentPackageName: 'com.hostelyaar.app',
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        // OSM requires a package identifier in the UA.
-                        // Replace with your real bundle id at release.
-                        userAgentPackageName: 'com.hostelyaar.app',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _picked,
-                            width: 48,
-                            height: 48,
-                            alignment: Alignment.topCenter,
-                            child: const Icon(
-                              Icons.location_on,
-                              color: maroon,
-                              size: 48,
-                            ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _picked,
+                          width: 48,
+                          height: 48,
+                          alignment: Alignment.topCenter,
+                          child: const Icon(
+                            Icons.location_on,
+                            color: maroon,
+                            size: 48,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: FloatingActionButton.small(
-                      heroTag: 'recenter',
-                      backgroundColor: Colors.white,
-                      foregroundColor: maroon,
-                      onPressed: () => _mapController.move(_picked, 15),
-                      child: const Icon(Icons.my_location),
+                        ),
+                      ],
                     ),
+                  ],
+                ),
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: FloatingActionButton.small(
+                    heroTag: 'my_location',
+                    backgroundColor: Colors.white,
+                    foregroundColor: maroon,
+                    onPressed: _isLocating ? null : _goToMyLocation,
+                    child: _isLocating
+                        ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                        AlwaysStoppedAnimation(maroon),
+                      ),
+                    )
+                        : const Icon(Icons.my_location),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            _buildFooter(context),
-          ],
-        ),
+          ),
+          SafeArea(
+            top: false,
+            child: _buildFooter(context),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
+      padding: EdgeInsets.fromLTRB(
+        8,
+        MediaQuery.of(context).padding.top + 8,
+        16,
+        12,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -253,7 +349,8 @@ class _PickLocationScreenState extends State<PickLocationScreen> {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.4,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                  valueColor:
+                  AlwaysStoppedAnimation(Colors.white),
                 ),
               )
                   : const Text(

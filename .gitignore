@@ -45,3 +45,7 @@ app.*.map.json
 /android/app/release
 
 *.bak
+build/
+.dart_tool/
+android/local.properties
+.idea/

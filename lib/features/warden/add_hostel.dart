@@ -108,22 +108,41 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           .map((s) => s.trim())
           .where((s) => s.isNotEmpty)
           .toList();
-      if (parts.length >= 2) {
-        // Try to find a known big-city name; fall back to the second-to-last.
+      if (parts.isNotEmpty) {
         const knownCities = [
           'Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad',
           'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
-          'Hyderabad', 'Bahawalpur',
+          'Hyderabad', 'Bahawalpur', 'Sargodha', 'Abbottabad',
         ];
-        final match = parts.firstWhere(
-              (p) => knownCities.any((c) => p.toLowerCase().contains(c.toLowerCase())),
-          orElse: () => '',
-        );
-        if (match.isNotEmpty) {
-          // Strip trailing postal codes if any.
-          _cityCtrl.text = match;
-        } else if (parts.length >= 2) {
-          _cityCtrl.text = parts[parts.length - 2];
+
+        String? city;
+
+        for (final seg in parts) {
+          final lower = seg.toLowerCase();
+          for (final candidate in knownCities) {
+            if (lower.contains(candidate.toLowerCase())) {
+              city = candidate;
+              break;
+            }
+          }
+          if (city != null) break;
+        }
+
+        if (city == null) {
+          const skipWords = {'pakistan', 'punjab', 'sindh', 'kpk', 'balochistan'};
+          for (var i = parts.length - 1; i >= 0; i--) {
+            final seg = parts[i];
+            final isPostal = RegExp(r'^\d{3,6}$').hasMatch(seg);
+            final isCountry = skipWords.contains(seg.toLowerCase());
+            if (!isPostal && !isCountry) {
+              city = seg;
+              break;
+            }
+          }
+        }
+
+        if (city != null && city.isNotEmpty) {
+          _cityCtrl.text = city;
         }
       }
     });
