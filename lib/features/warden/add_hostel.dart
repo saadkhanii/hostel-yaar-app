@@ -56,6 +56,12 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   final _whatsappCtrl = TextEditingController();
   bool _inAppChat = true;
 
+  // ── Bulk pricing (Step 3 quick-fill) ───────────────────────
+  final _bulkWholeRentCtrl = TextEditingController();
+  final _bulkWholeAdvanceCtrl = TextEditingController();
+  final _bulkSeatRentCtrl = TextEditingController();
+  final _bulkSeatAdvanceCtrl = TextEditingController();
+
   // ── Photos ─────────────────────────────────────────────────
   final List<String> _photos = [];
 
@@ -70,6 +76,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     _totalRoomsCtrl.dispose();
     _phoneCtrl.dispose();
     _whatsappCtrl.dispose();
+    _bulkWholeRentCtrl.dispose();
+    _bulkWholeAdvanceCtrl.dispose();
+    _bulkSeatRentCtrl.dispose();
+    _bulkSeatAdvanceCtrl.dispose();
     super.dispose();
   }
 
@@ -161,7 +171,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: fg, size: 18),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (_currentStep > 0) {
+              // Step back within the wizard.
+              setState(() => _currentStep--);
+            } else {
+              // We're on Step 1 — leave the screen entirely.
+              Navigator.pop(context);
+            }
+          },
         ),
         title: Text(
           'Add New Hostel',
@@ -472,6 +490,9 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
   // ── Step 2: Rooms ─────────────────────────────────────────────────────────
   Widget _buildRooms(Color fg) {
+    final declaredTotal = _declaredTotalRooms;
+    final atLimit = declaredTotal != null && _rooms.length >= declaredTotal;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -493,47 +514,105 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             onEdit: () => _showAddRoomSheet(existingIndex: i),
           );
         }),
-        GestureDetector(
-          onTap: () => _showAddRoomSheet(),
-          child: Container(
+
+        // Add-room button OR the "all added" confirmation.
+        if (atLimit)
+          Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: maroon.withValues(alpha: 0.06),
+              color: Colors.green.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: maroon.withValues(alpha: 0.3),
-                style: BorderStyle.solid,
-              ),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.35)),
             ),
-            child: Column(
+            child: Row(
               children: [
                 Icon(
-                  Icons.add_circle_outline,
-                  color: maroon.withValues(alpha: 0.6),
-                  size: 28,
+                  Icons.check_circle_outline,
+                  color: Colors.green[800],
+                  size: 22,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Add a Room',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: maroon.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'All $declaredTotal rooms added',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[800],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'To add more, go back to Step 1 and change the total.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green[800]?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
+          )
+        else
+          GestureDetector(
+            onTap: () => _showAddRoomSheet(),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: maroon.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: maroon.withValues(alpha: 0.3),
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.add_circle_outline,
+                    color: maroon.withValues(alpha: 0.6),
+                    size: 28,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Add a Room',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: maroon.withValues(alpha: 0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (declaredTotal != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        '${_rooms.length} of $declaredTotal added',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: maroon.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-        if (_declaredTotalRooms != null &&
-            _rooms.length != _declaredTotalRooms) ...[
+
+        // Warning if the warden has mismatched counts (over OR under).
+        if (declaredTotal != null && _rooms.length != declaredTotal) ...[
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              _rooms.length < _declaredTotalRooms!
-                  ? 'Add ${_declaredTotalRooms! - _rooms.length} more room${_declaredTotalRooms! - _rooms.length == 1 ? '' : 's'} to match the total entered in Step 1'
-                  : 'You have ${_rooms.length - _declaredTotalRooms!} more room${_rooms.length - _declaredTotalRooms! == 1 ? '' : 's'} than declared in Step 1',
+              _rooms.length < declaredTotal
+                  ? 'Add ${declaredTotal - _rooms.length} more room${declaredTotal - _rooms.length == 1 ? '' : 's'} to match the total entered in Step 1'
+                  : 'You have ${_rooms.length - declaredTotal} more room${_rooms.length - declaredTotal == 1 ? '' : 's'} than declared in Step 1',
               style: TextStyle(
                 fontSize: 12,
                 color: maroon.withValues(alpha: 0.5),
@@ -638,6 +717,13 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
   // ── Step 3: Pricing ───────────────────────────────────────────────────────
   Widget _buildPricing(Color fg) {
+    // Split rooms by booking type so the bulk panel only shows the
+    // sections that are relevant to the rooms the warden has actually
+    // added. Whole-room prices and per-seat prices mean different
+    // things and shouldn't be conflated.
+    final wholeRooms = _rooms.where((r) => r['bookingType'] == 'Room').toList();
+    final seatRooms = _rooms.where((r) => r['bookingType'] == 'Seat').toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -648,6 +734,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
           style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 16),
+
         if (_rooms.isEmpty)
           Container(
             padding: const EdgeInsets.all(16),
@@ -672,13 +759,101 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
               ],
             ),
           )
-        else
+        else ...[
+          // ── Quick-fill panel ────────────────────────────────────
+          if (wholeRooms.isNotEmpty)
+            _BulkPricingCard(
+              label: 'Complete Rooms',
+              subtitle: '${wholeRooms.length} room${wholeRooms.length == 1 ? '' : 's'}',
+              rentLabel: 'Rent per month (per room)',
+              advanceLabel: 'Advance security (per room)',
+              rentCtrl: _bulkWholeRentCtrl,
+              advanceCtrl: _bulkWholeAdvanceCtrl,
+              onApply: () {
+                final rentText = _bulkWholeRentCtrl.text.trim();
+                final advanceText = _bulkWholeAdvanceCtrl.text.trim();
+
+                final rent = rentText.isEmpty ? null : int.tryParse(rentText);
+                final advance = advanceText.isEmpty ? null : int.tryParse(advanceText);
+
+                if (rentText.isNotEmpty && (rent == null || rent <= 0)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid rent amount')),
+                  );
+                  return;
+                }
+                if (advanceText.isNotEmpty && (advance == null || advance < 0)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid advance amount')),
+                  );
+                  return;
+                }
+                if (rent == null && advance == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Fill at least one field to apply')),
+                  );
+                  return;
+                }
+
+                _applyBulkPricing(
+                  bookingType: 'Room',
+                  rent: rent,
+                  advance: advance,
+                );
+              },
+            ),
+
+          if (wholeRooms.isNotEmpty && seatRooms.isNotEmpty)
+            const SizedBox(height: 12),
+
+          if (seatRooms.isNotEmpty)
+            _BulkPricingCard(
+              label: 'Per-Seat Rooms',
+              subtitle: '${seatRooms.length} room${seatRooms.length == 1 ? '' : 's'}',
+              rentLabel: 'Rent per month (per seat)',
+              advanceLabel: 'Advance security (per seat)',
+              rentCtrl: _bulkSeatRentCtrl,
+              advanceCtrl: _bulkSeatAdvanceCtrl,
+              onApply: () {
+                final rent = int.tryParse(_bulkSeatRentCtrl.text.trim());
+                final advance =
+                    int.tryParse(_bulkSeatAdvanceCtrl.text.trim()) ?? 0;
+                if (rent == null || rent <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Enter a valid rent amount first'),
+                    ),
+                  );
+                  return;
+                }
+                _applyBulkPricing(
+                  bookingType: 'Seat',
+                  rent: rent,
+                  advance: advance,
+                );
+              },
+            ),
+
+          const SizedBox(height: 24),
+          _sectionLabel('Per-room overrides', fg),
+          const SizedBox(height: 4),
+          Text(
+            'Fine-tune any room below. Values set here override the quick-fill.',
+            style: TextStyle(
+              fontSize: 11,
+              color: fg.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── Individual room cards ───────────────────────────────
           ..._rooms.asMap().entries.map((entry) {
             final i = entry.key;
             final room = entry.value;
             final isWholeRoom = room['bookingType'] == 'Room';
             final price = room['price'] as int;
             final advance = room['advance'] as int;
+
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(14),
@@ -708,9 +883,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '• ${room['roomType']} Seater',
+                        '• ${room['roomType']} Seater • '
+                            '${isWholeRoom ? "Whole Room" : "Per Seat"}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: maroon.withValues(alpha: 0.6),
                         ),
                       ),
@@ -718,7 +894,10 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                   ),
                   const SizedBox(height: 12),
                   _inputField(
-                    key: ValueKey('room_price_${room['number']}_$i'),
+                    // The `_$price` at the end is important: when bulk apply
+                    // changes the underlying value, this makes Flutter treat
+                    // the field as new and re-seed the initialValue.
+                    key: ValueKey('room_price_${room['number']}_$i' '_$price'),
                     initialValue: price == 0 ? '' : price.toString(),
                     label: isWholeRoom
                         ? 'Rent per Month (per room)'
@@ -728,12 +907,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Required' : null,
-                    onChanged: (v) => _rooms[i]['price'] = int.tryParse(v) ?? 0,
+                    (v == null || v.isEmpty) ? 'Required' : null,
+                    onChanged: (v) =>
+                    _rooms[i]['price'] = int.tryParse(v) ?? 0,
                   ),
                   const SizedBox(height: 12),
                   _inputField(
-                    key: ValueKey('room_advance_${room['number']}_$i'),
+                    key: ValueKey(
+                      'room_advance_${room['number']}_$i' '_$advance',
+                    ),
                     initialValue: advance == 0 ? '' : advance.toString(),
                     label: isWholeRoom
                         ? 'Advance Security (per room)'
@@ -743,14 +925,15 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Required' : null,
+                    (v == null || v.isEmpty) ? 'Required' : null,
                     onChanged: (v) =>
-                        _rooms[i]['advance'] = int.tryParse(v) ?? 0,
+                    _rooms[i]['advance'] = int.tryParse(v) ?? 0,
                   ),
                 ],
               ),
             );
           }),
+        ],
       ],
     );
   }
@@ -840,18 +1023,33 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         _inputField(
           controller: _phoneCtrl,
           label: 'Phone Number',
-          hint: '03XX-XXXXXXX',
+          hint: '03xxxxxxxxx',
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
-          validator: (v) => v!.isEmpty ? 'Required' : null,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (v) {
+            final value = (v ?? '').trim();
+            if (value.isEmpty) return 'Required';
+            if (value.length != 11) return 'Enter 11 digits';
+            if (!value.startsWith('03')) return 'Must start with 03';
+            return null;
+          },
         ),
         const SizedBox(height: 14),
         _inputField(
           controller: _whatsappCtrl,
           label: 'WhatsApp Number',
-          hint: '03XX-XXXXXXX',
+          hint: '03xxxxxxxxx',
           icon: Icons.chat_outlined,
           keyboardType: TextInputType.phone,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (v) {
+            final value = (v ?? '').trim();
+            if (value.isEmpty) return null; // optional
+            if (value.length != 11) return 'Enter 11 digits';
+            if (!value.startsWith('03')) return 'Must start with 03';
+            return null;
+          },
         ),
         const SizedBox(height: 14),
         Container(
@@ -1615,6 +1813,42 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     }
   }
 
+  /// Applies rent and/or advance to every room of the given [bookingType].
+  /// Both arguments are optional — pass null to leave that field untouched.
+  void _applyBulkPricing({
+    required String bookingType,
+    int? rent,
+    int? advance,
+  }) {
+    if (rent == null && advance == null) return;
+
+    int touched = 0;
+    setState(() {
+      for (var i = 0; i < _rooms.length; i++) {
+        if (_rooms[i]['bookingType'] == bookingType) {
+          if (rent != null) _rooms[i]['price'] = rent;
+          if (advance != null) _rooms[i]['advance'] = advance;
+          touched++;
+        }
+      }
+    });
+
+    final label = bookingType == 'Room' ? 'whole room' : 'per-seat room';
+    final parts = <String>[];
+    if (rent != null) parts.add('rent');
+    if (advance != null) parts.add('advance');
+    final fields = parts.join(' & ');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Applied $fields to $touched $label${touched == 1 ? '' : 's'}',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1826,6 +2060,126 @@ class _RoomCard extends StatelessWidget {
               size: 18,
             ),
             onPressed: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Bulk Pricing Card ────────────────────────────────────────────────────────
+//
+// Renders one section of the "quick fill" panel in Step 3. One instance
+// per booking type present in the warden's room list (whole rooms vs
+// per-seat rooms), so the same rent number is never silently applied
+// across two semantically different room types.
+class _BulkPricingCard extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final String rentLabel;
+  final String advanceLabel;
+  final TextEditingController rentCtrl;
+  final TextEditingController advanceCtrl;
+  final VoidCallback onApply;
+
+  const _BulkPricingCard({
+    required this.label,
+    required this.subtitle,
+    required this.rentLabel,
+    required this.advanceLabel,
+    required this.rentCtrl,
+    required this.advanceCtrl,
+    required this.onApply,
+  });
+
+  static const maroon = Color(0xFF800020);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: maroon.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: maroon.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.bolt_outlined,
+                color: maroon.withValues(alpha: 0.8),
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Quick fill — $label',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: maroon,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '• $subtitle',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: maroon.withValues(alpha: 0.55),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _inputField(
+            controller: rentCtrl,
+            label: rentLabel,
+            hint: 'e.g. 12000',
+            icon: Icons.payments_outlined,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 10),
+          _inputField(
+            controller: advanceCtrl,
+            label: advanceLabel,
+            hint: 'e.g. 16000',
+            icon: Icons.lock_outline,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onApply,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: maroon),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.check, color: maroon, size: 18),
+              label: const Text(
+                'Apply to all',
+                style: TextStyle(
+                  color: maroon,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Fill one or both fields. This will overwrite existing values on these rooms.',
+            style: TextStyle(
+              fontSize: 10,
+              color: maroon.withValues(alpha: 0.5),
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ),
