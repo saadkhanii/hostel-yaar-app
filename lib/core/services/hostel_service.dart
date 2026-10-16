@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../network/api_client.dart';
+import '../utils/hostel_mappers.dart';
 
 class HostelService {
   final Dio _dio = ApiClient().dio;
@@ -42,7 +43,7 @@ class HostelService {
       };
 
       final response = await _dio.post('/hostels', data: body);
-      return _hostelFromBackend(response.data as Map<String, dynamic>);
+      return hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -63,7 +64,7 @@ class HostelService {
         },
       );
       return (response.data as List)
-          .map((h) => _hostelFromBackend(h as Map<String, dynamic>))
+          .map((h) => hostelFromBackend(h as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
@@ -73,7 +74,7 @@ class HostelService {
   Future<Map<String, dynamic>> getHostel(String hostelId) async {
     try {
       final response = await _dio.get('/hostels/$hostelId');
-      return _hostelFromBackend(response.data as Map<String, dynamic>);
+      return hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -83,7 +84,7 @@ class HostelService {
     try {
       final response = await _dio.get('/hostels/mine');
       return (response.data as List)
-          .map((h) => _hostelFromBackend(h as Map<String, dynamic>))
+          .map((h) => hostelFromBackend(h as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
@@ -91,18 +92,18 @@ class HostelService {
   }
 
   Future<Map<String, dynamic>> updateHostel(
-    String hostelId, {
-    String? name,
-    String? city,
-    String? address,
-    String? type,
-    List<String>? facilities,
-    List<String>? photos,
-    String? phone,
-    String? whatsapp,
-    bool? inAppChat,
-    bool? active,
-  }) async {
+      String hostelId, {
+        String? name,
+        String? city,
+        String? address,
+        String? type,
+        List<String>? facilities,
+        List<String>? photos,
+        String? phone,
+        String? whatsapp,
+        bool? inAppChat,
+        bool? active,
+      }) async {
     try {
       final body = <String, dynamic>{
         if (name != null) 'name': name,
@@ -118,7 +119,7 @@ class HostelService {
       };
 
       final response = await _dio.put('/hostels/$hostelId', data: body);
-      return _hostelFromBackend(response.data as Map<String, dynamic>);
+      return hostelFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -137,31 +138,31 @@ class HostelService {
   // ─────────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> addRoom(
-    String hostelId,
-    Map<String, dynamic> room,
-  ) async {
+      String hostelId,
+      Map<String, dynamic> room,
+      ) async {
     try {
       final response = await _dio.post(
         '/hostels/$hostelId/rooms',
         data: _roomToBackend(room),
       );
-      return _roomFromBackend(response.data as Map<String, dynamic>);
+      return roomFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
   }
 
   Future<Map<String, dynamic>> updateRoom(
-    String hostelId,
-    String roomId,
-    Map<String, dynamic> updates,
-  ) async {
+      String hostelId,
+      String roomId,
+      Map<String, dynamic> updates,
+      ) async {
     try {
       final response = await _dio.put(
         '/hostels/$hostelId/rooms/$roomId',
         data: _roomToBackend(updates, partial: true),
       );
-      return _roomFromBackend(response.data as Map<String, dynamic>);
+      return roomFromBackend(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_errorMessage(e));
     }
@@ -171,8 +172,6 @@ class HostelService {
   // Saved Hostels
   // ─────────────────────────────────────────────────────────────────
 
-  /// Current seeker's saved hostels, most recently saved first.
-  /// Each item is `{ savedAt: String, hostel: Map }`.
   Future<List<Map<String, dynamic>>> listSavedHostels() async {
     try {
       final response = await _dio.get('/saved-hostels');
@@ -180,8 +179,7 @@ class HostelService {
         final m = item as Map<String, dynamic>;
         return {
           'savedAt': m['saved_at'],
-          'hostel': _hostelFromBackend(
-              m['hostel'] as Map<String, dynamic>),
+          'hostel': hostelFromBackend(m['hostel'] as Map<String, dynamic>),
         };
       }).toList();
     } on DioException catch (e) {
@@ -189,7 +187,6 @@ class HostelService {
     }
   }
 
-  /// Save a hostel for the current seeker. Idempotent.
   Future<void> saveHostel(String hostelId) async {
     try {
       await _dio.post('/saved-hostels/$hostelId');
@@ -198,7 +195,6 @@ class HostelService {
     }
   }
 
-  /// Unsave a hostel for the current seeker. Idempotent.
   Future<void> unsaveHostel(String hostelId) async {
     try {
       await _dio.delete('/saved-hostels/$hostelId');
@@ -216,13 +212,15 @@ class HostelService {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // Translation: backend (snake_case) <-> Flutter (camelCase)
+  // Backend-shape translation (Flutter -> backend)
   // ─────────────────────────────────────────────────────────────────
 
+  /// Convert a Flutter-side room map to the backend shape (snake_case).
+  /// Kept private because only this service creates/updates rooms.
   Map<String, dynamic> _roomToBackend(
-    Map<String, dynamic> room, {
-    bool partial = false,
-  }) {
+      Map<String, dynamic> room, {
+        bool partial = false,
+      }) {
     final out = <String, dynamic>{};
 
     void copy(String dartKey, String jsonKey) {
@@ -242,66 +240,6 @@ class HostelService {
     copy('availabilityDates', 'availability_dates');
 
     return out;
-  }
-
-  /// Convert a backend hostel JSON object into the Flutter shape.
-  ///
-  /// Facilities stay a `List<String>` — this matches the backend shape
-  /// and is what display screens (list, detail) want. The Edit screen
-  /// converts List <-> Map internally.
-  Map<String, dynamic> _hostelFromBackend(Map<String, dynamic> raw) {
-    final rawRooms = (raw['rooms'] as List?) ?? const [];
-
-    return {
-      'id': raw['id'],
-      'wardenId': raw['warden_id'],
-      'name': raw['name'],
-      'city': raw['city'],
-      'address': raw['address'],
-      'type': raw['type'],
-      'latitude': raw['latitude'],
-      'longitude': raw['longitude'],
-      'facilities': (raw['facilities'] as List?)?.cast<String>() ?? const [],
-      'photos': (raw['photos'] as List?)?.cast<String>() ?? const [],
-      'phone': raw['phone'],
-      'whatsapp': raw['whatsapp'],
-      'inAppChat': raw['in_app_chat'] ?? true,
-      'active': raw['active'] ?? true,
-      'startingPrice': raw['starting_price'] ?? 0,
-      'hasVacancy': raw['has_vacancy'] ?? false,
-      'roomCount': raw['room_count'] ?? 0,
-      'createdAt': raw['created_at'],
-      'updatedAt': raw['updated_at'],
-      'rooms': rawRooms
-          .map((r) => _roomFromBackend(r as Map<String, dynamic>))
-          .toList(),
-    };
-  }
-
-  Map<String, dynamic> _roomFromBackend(Map<String, dynamic> raw) {
-    return {
-      'id': raw['id'],
-      'hostelId': raw['hostel_id'],
-      'number': raw['number'],
-      'bookingType': raw['booking_type'],
-      'roomType': raw['room_type'],
-      'availableSeats': raw['available_seats'],
-      'attachedWashroom': raw['attached_washroom'],
-      'price': raw['price'],
-      'advance': raw['advance'],
-      'vacant': raw['vacant'],
-      'availabilityDates': (raw['availability_dates'] as List?) ?? const [],
-      'availabilitySameDate': _sameDate(
-        (raw['availability_dates'] as List?) ?? const [],
-      ),
-      'upcomingVacancies': <Map<String, dynamic>>[],
-    };
-  }
-
-  bool _sameDate(List<dynamic> dates) {
-    if (dates.length <= 1) return true;
-    final first = dates.first;
-    return dates.every((d) => d == first);
   }
 
   String _errorMessage(DioException e) {

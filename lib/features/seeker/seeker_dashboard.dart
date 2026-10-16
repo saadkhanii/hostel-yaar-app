@@ -8,6 +8,7 @@ import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/avatar.dart';
 import '../../shared/widgets/hostel_thumbnail.dart';
 import '../../shared/widgets/notification_badge.dart';
+import 'ai_search_screen.dart';
 
 void _openHostelDetail(BuildContext context, Map<String, dynamic> hostel) {
   NavigationService.navigateTo(AppRoutes.hostelDetail, arguments: hostel);
@@ -136,7 +137,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
               children: [
                 // ── Header ───────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
@@ -154,6 +155,7 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,14 +184,21 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
                         children: [
                           _HeaderBell(),
                           const SizedBox(width: 12),
-                          Avatar.current(
-                            size: 46,
-                            backgroundColor: Colors.white.withValues(alpha: 0.15),
-                            textColor: Colors.white,
-                            borderColor: Colors.white,
-                            borderWidth: 1.5,
-                            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                          )
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                width: 2,
+                              ),
+                            ),
+                            child: Avatar.current(
+                              size: 44,
+                              backgroundColor: Colors.transparent,
+                              textColor: Colors.white,
+                              onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -392,11 +401,13 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
 
       _ActionCard(
         title: 'Tell AI What You Need',
-        subtitle: 'Answer a few questions, get matched instantly',
+        subtitle: 'Describe what you want, get matched instantly',
         icon: Icons.auto_awesome,
         isDark: isDark,
         cardColor: cardColor,
-        onTap: () => _goToSearch(),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AiSearchScreen()),
+        ),
       ),
       const SizedBox(height: 12),
       _ActionCard(
@@ -479,47 +490,49 @@ class _SeekerDashboardState extends State<SeekerDashboard> {
   }
 
   Widget _buildErrorState(Color fg) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
-      child: Column(
-        children: [
-          Icon(Icons.error_outline, size: 48, color: fg.withValues(alpha: 0.4)),
-          const SizedBox(height: 12),
-          Text(
-            'Could not load hostels',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: fg.withValues(alpha: 0.85),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _errorText!,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.6)),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _loadHostels,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: maroon,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
-            label: const Text(
-              'Retry',
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 8),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 48, color: fg.withValues(alpha: 0.4)),
+            const SizedBox(height: 12),
+            Text(
+              'Could not load hostels',
               style: TextStyle(
-                color: Colors.white,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
+                color: fg.withValues(alpha: 0.85),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              _errorText!,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: fg.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _loadHostels,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: maroon,
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+              label: const Text(
+                'Retry',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

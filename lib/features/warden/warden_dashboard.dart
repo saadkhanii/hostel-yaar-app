@@ -158,8 +158,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
               children: [
                 // ── Header ───────────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 16, 20),
-                  decoration: BoxDecoration(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),                  decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -176,6 +175,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,14 +204,21 @@ class _WardenDashboardState extends State<WardenDashboard> {
                         children: [
                           _HeaderBell(),
                           const SizedBox(width: 12),
-                          Avatar.current(
-                            size: 46,
-                            backgroundColor: Colors.white.withValues(alpha: 0.15),
-                            textColor: Colors.white,
-                            borderColor: Colors.white,
-                            borderWidth: 1.5,
-                            onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                          )
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.7),
+                                width: 2,
+                              ),
+                            ),
+                            child: Avatar.current(
+                              size: 44,
+                              backgroundColor: Colors.transparent,
+                              textColor: Colors.white,
+                              onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                            ),
+                          ),
                         ],
                       ),
                     ],

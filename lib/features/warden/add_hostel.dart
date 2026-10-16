@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hostel_yaar/features/warden/pick_location_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import '../../core/services/cloudinary_service.dart';
 import '../../core/services/hostel_service.dart';
 
@@ -21,6 +23,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
   final _imagePicker = ImagePicker();
   final Set<String> _uploadingPhotos = {}; // tracks in-flight uploads
   int _currentStep = 0;
+  double? _pickedLat;
+  double? _pickedLng;
 
   // ── Basic Info ─────────────────────────────────────────────
   final _nameCtrl = TextEditingController();
@@ -67,6 +71,62 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     _phoneCtrl.dispose();
     _whatsappCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickLocationOnMap() async {
+    // Seed the picker with whatever we already have, so re-editing
+    // lands on the same spot instead of jumping back to Lahore.
+    LatLng? initial;
+    if (_pickedLat != null && _pickedLng != null) {
+      initial = LatLng(_pickedLat!, _pickedLng!);
+    }
+
+    final result = await Navigator.of(context).push<PickedLocation>(
+      MaterialPageRoute(
+        builder: (_) => PickLocationScreen(initial: initial),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _pickedLat = result.latitude;
+      _pickedLng = result.longitude;
+
+      // Auto-fill the address field with whatever Nominatim returned.
+      // The warden can still edit it — the coordinates are what matter
+      // for the map pin.
+      _addressCtrl.text = result.address;
+
+      // Best-effort city extraction: Nominatim's display_name is a
+      // comma-separated list, typically ordered smallest → largest, e.g.
+      // "House 12, Street 5, Gulberg III, Lahore, Punjab, 54000, Pakistan"
+      // We want "Lahore" — usually the second-to-last or third-to-last
+      // segment. This is heuristic; the warden can correct it.
+      final parts = result.address
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (parts.length >= 2) {
+        // Try to find a known big-city name; fall back to the second-to-last.
+        const knownCities = [
+          'Lahore', 'Karachi', 'Islamabad', 'Rawalpindi', 'Faisalabad',
+          'Multan', 'Peshawar', 'Quetta', 'Sialkot', 'Gujranwala',
+          'Hyderabad', 'Bahawalpur',
+        ];
+        final match = parts.firstWhere(
+              (p) => knownCities.any((c) => p.toLowerCase().contains(c.toLowerCase())),
+          orElse: () => '',
+        );
+        if (match.isNotEmpty) {
+          // Strip trailing postal codes if any.
+          _cityCtrl.text = match;
+        } else if (parts.length >= 2) {
+          _cityCtrl.text = parts[parts.length - 2];
+        }
+      }
+    });
   }
 
   @override
@@ -263,6 +323,98 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 14),
+
+// ── Pick-on-map button ────────────────────────────────────
+// The warden taps this to open a map. When they confirm a
+// location, the address and city auto-fill below.
+        _sectionLabel('Location', fg),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _pickLocationOnMap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: maroon.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _pickedLat != null
+                    ? maroon
+                    : maroon.withValues(alpha: 0.25),
+                width: _pickedLat != null ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _pickedLat != null
+                      ? Icons.check_circle
+                      : Icons.add_location_alt_outlined,
+                  color: maroon,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _pickedLat != null
+                            ? 'Location set'
+                            : 'Pick location on map',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: maroon,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _pickedLat != null
+                            ? 'Tap to change'
+                            : 'Tap the map to drop a pin',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: maroon.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: maroon.withValues(alpha: 0.4),
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+// Show the picked coordinates once set.
+        if (_pickedLat != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.place_outlined,
+                size: 14,
+                color: maroon.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${_pickedLat!.toStringAsFixed(5)}, '
+                    '${_pickedLng!.toStringAsFixed(5)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: maroon.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ],
+
         const SizedBox(height: 14),
         _inputField(
           controller: _cityCtrl,
@@ -1483,6 +1635,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         city: _cityCtrl.text.trim(),
         address: _addressCtrl.text.trim(),
         type: _selectedType,
+        latitude: _pickedLat,
+        longitude: _pickedLng,
         facilities: selectedFacilities,
         photos: _photos,
         phone: _phoneCtrl.text.trim(),
