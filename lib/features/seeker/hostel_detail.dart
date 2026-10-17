@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/services/booking_service.dart';
 import '../../core/services/chat_service.dart';
@@ -6,28 +7,11 @@ import '../../core/services/hostel_service.dart';
 import '../chat/chat_screen.dart';
 
 // ── Hostel Detail Screen ───────────────────────────────────────────────
-// Shown when a seeker taps a hostel card on the list. Receives a hostel
-// map via router arguments (already in Flutter camelCase shape from
-// HostelService). On open, re-fetches by id so the seeker always sees
-// fresh data — the passed-in map might be stale.
-//
-// Expected shape of the `hostel` map (matches HostelService output):
-// {
-//   'id', 'wardenId', 'name', 'city', 'address', 'type',
-//   'latitude', 'longitude',
-//   'facilities': List<String>,
-//   'photos': List<String>,
-//   'phone', 'whatsapp', 'inAppChat', 'active',
-//   'startingPrice', 'hasVacancy', 'roomCount',
-//   'createdAt', 'updatedAt',
-//   'rooms': List<Map<String, dynamic>>  // camelCase, from _roomFromBackend
-// }
 class HostelDetailScreen extends StatefulWidget {
   final Map<String, dynamic> hostel;
 
   const HostelDetailScreen({super.key, required this.hostel});
 
-  /// Fallback shape used when a caller navigates without arguments.
   static Map<String, dynamic> get sampleHostel => const {
     'id': '',
     'wardenId': '',
@@ -63,7 +47,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   late Map<String, dynamic> _hostel;
   bool _isRefreshing = false;
-  /// roomNumber -> pending seat count for that room.
   final Map<String, int> _requestedRooms = {};
 
   static const Map<String, IconData> _facilityIcons = {
@@ -123,18 +106,16 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
   bool _isOpeningChat = false;
 
-  /// Opens (or resumes) the chat thread between the current seeker and
-  /// this hostel's warden, scoped to this hostel. The server dedupes by
-  /// (seeker, warden, hostel), so tapping the button twice in a row just
-  /// lands in the same thread.
   Future<void> _openChatWithWarden() async {
     if (_isOpeningChat) return;
 
     final hostelId = _hostel['id'] as String?;
     final wardenId = _hostel['wardenId'] as String?;
 
-    if (hostelId == null || hostelId.isEmpty ||
-        wardenId == null || wardenId.isEmpty) {
+    if (hostelId == null ||
+        hostelId.isEmpty ||
+        wardenId == null ||
+        wardenId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('This hostel has no warden assigned.')),
       );
@@ -151,8 +132,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
 
       if (!mounted) return;
 
-      // Seeker view: header shows the hostel name, subtitle "Warden".
-      // ChatScreen takes these as plain strings, so no other plumbing.
       final hostelName = _hostel['name'] as String? ?? 'Hostel';
 
       Navigator.of(context).push(
@@ -171,20 +150,13 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
-          ),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) setState(() => _isOpeningChat = false);
     }
   }
 
-  /// Map of roomNumber -> total pending seat_count for that room, in
-  /// this hostel. Used to disable/adjust the max in the request dialog
-  /// and to show the "Requested" state on the room card.
   Future<Map<String, int>> _pendingRoomSeatsFor(String hostelId) async {
     try {
       final requests = await BookingService().listMyRequests();
@@ -203,7 +175,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     }
   }
 
-  /// Whether the current seeker has already saved this hostel.
   Future<bool> _isSavedOnServer(String hostelId) async {
     try {
       final saved = await _hostelService.listSavedHostels();
@@ -213,7 +184,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     }
   }
 
-  /// Toggle save state. Optimistic — flips locally, reverts on failure.
   Future<void> _toggleSave() async {
     final id = _hostel['id'] as String?;
     if (id == null || id.isEmpty || _isTogglingSave) return;
@@ -257,11 +227,22 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   int get _availableRoomCount => _rooms.where(_isRoomAvailable).length;
 
   static const _months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
-  String _formatDate(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
+  String _formatDate(DateTime d) =>
+      '${d.day} ${_months[d.month - 1]} ${d.year}';
 
   Future<void> _requestBooking(Map<String, dynamic> room) async {
     DateTime? moveInDate;
@@ -272,29 +253,36 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final isSeatRequest = room['bookingType'] == 'Seat';
     final availableSeats = (room['availableSeats'] as int?) ?? 0;
     final pendingSeats = _requestedRooms[room['number']] ?? 0;
-    final remainingSeats = (availableSeats - pendingSeats).clamp(0, availableSeats);
+    final remainingSeats = (availableSeats - pendingSeats).clamp(
+      0,
+      availableSeats,
+    );
 
     int seatCount = 1;
     final dialogTitle = isSeatRequest ? 'Request a Seat' : 'Request to Book';
     final dialogBody = isSeatRequest
         ? (pendingSeats > 0
-        ? 'Add another seat request for Room ${room['number']} at ${_hostel['name']}? $remainingSeats seat${remainingSeats == 1 ? '' : 's'} still available.'
-        : 'Send a request to book a seat in Room ${room['number']} at ${_hostel['name']}? There are $availableSeats seat${availableSeats == 1 ? '' : 's'} available.')
+              ? 'Add another seat request for Room ${room['number']} at ${_hostel['name']}? $remainingSeats seat${remainingSeats == 1 ? '' : 's'} still available.'
+              : 'Send a request to book a seat in Room ${room['number']} at ${_hostel['name']}? There are $availableSeats seat${availableSeats == 1 ? '' : 's'} available.')
         : 'Send a booking request for the whole of Room ${room['number']} at ${_hostel['name']}? The warden will confirm availability before you pay any advance.';
+
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
           final dialogIsDark = Theme.of(context).brightness == Brightness.dark;
-          final dialogCardColor =
-          dialogIsDark ? const Color(0xFF262B33) : Colors.white;
+          final dialogCardColor = dialogIsDark
+              ? const Color(0xFF262B33)
+              : Colors.white;
+
           return AlertDialog(
             backgroundColor: dialogIsDark
                 ? const Color(0xFF1D2128)
                 : const Color(0xFFF3E6D5),
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             title: Text(
               dialogTitle,
               style: const TextStyle(
@@ -324,33 +312,41 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 4),
+                        horizontal: 14,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: maroon.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: maroon.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: maroon.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<int>(
                           value: seatCount,
                           isExpanded: true,
-                          dropdownColor: Theme.of(context).brightness ==
-                              Brightness.dark
+                          dropdownColor: dialogIsDark
                               ? const Color(0xFF1D2128)
                               : const Color(0xFFF3E6D5),
-                          icon: const Icon(Icons.keyboard_arrow_down,
-                              color: maroon),
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: maroon,
+                          ),
                           style: const TextStyle(fontSize: 14, color: maroon),
                           items: List.generate(remainingSeats, (i) => i + 1)
-                              .map((n) => DropdownMenuItem<int>(
-                            value: n,
-                            child: Text(
-                              n == 1 ? '1 seat' : '$n seats',
-                              style: const TextStyle(
-                                  color: maroon,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ))
+                              .map(
+                                (n) => DropdownMenuItem<int>(
+                                  value: n,
+                                  child: Text(
+                                    n == 1 ? '1 seat' : '$n seats',
+                                    style: const TextStyle(
+                                      color: maroon,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (v) {
                             if (v != null) {
@@ -365,16 +361,18 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   Text(
                     'When do you want to move in?',
                     style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: maroon),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: maroon,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   GestureDetector(
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: moveInDate ??
+                        initialDate:
+                            moveInDate ??
                             DateTime.now().add(const Duration(days: 1)),
                         firstDate: DateTime.now(),
                         lastDate: DateTime.now().add(const Duration(days: 365)),
@@ -385,14 +383,17 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: dialogCardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                                alpha: dialogIsDark ? 0.2 : 0.05),
+                              alpha: dialogIsDark ? 0.2 : 0.05,
+                            ),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -400,8 +401,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined,
-                              color: maroon, size: 18),
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            color: maroon,
+                            size: 18,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -409,9 +413,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                                   ? 'Select a date'
                                   : _formatDate(moveInDate!),
                               style: const TextStyle(
-                                  fontSize: 13,
-                                  color: maroon,
-                                  fontWeight: FontWeight.w600),
+                                fontSize: 13,
+                                color: maroon,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -422,9 +427,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   Text(
                     'Message (optional)',
                     style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: maroon),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: maroon,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -435,10 +441,13 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     decoration: InputDecoration(
                       hintText: 'e.g. I\'m a student looking to move in soon.',
                       hintStyle: TextStyle(
-                          fontSize: 12,
-                          color: maroon.withValues(alpha: 0.4)),
+                        fontSize: 12,
+                        color: maroon.withValues(alpha: 0.4),
+                      ),
                       counterStyle: TextStyle(
-                          fontSize: 10, color: maroon.withValues(alpha: 0.4)),
+                        fontSize: 10,
+                        color: maroon.withValues(alpha: 0.4),
+                      ),
                       filled: true,
                       fillColor: dialogCardColor,
                       contentPadding: const EdgeInsets.all(12),
@@ -461,7 +470,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     Text(
                       errorText!,
                       style: const TextStyle(
-                          fontSize: 12, color: Colors.redAccent),
+                        fontSize: 12,
+                        color: Colors.redAccent,
+                      ),
                     ),
                   ],
                 ],
@@ -472,75 +483,78 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                 onPressed: isSubmitting
                     ? null
                     : () => Navigator.pop(dialogContext),
-                child: Text('Cancel',
-                    style: TextStyle(color: maroon.withValues(alpha: 0.6))),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: maroon.withValues(alpha: 0.6)),
+                ),
               ),
               TextButton(
                 onPressed: moveInDate == null || isSubmitting
                     ? null
                     : () async {
-                  setDialogState(() {
-                    isSubmitting = true;
-                    errorText = null;
-                  });
-                  // Capture these BEFORE the await so we don't
-                  // touch context across an async gap.
-                  final messenger = ScaffoldMessenger.of(this.context);
-                  final navigator = Navigator.of(dialogContext);
+                        setDialogState(() {
+                          isSubmitting = true;
+                          errorText = null;
+                        });
 
-                  try {
-                    await BookingService().createRequest(
-                      hostelId: _hostel['id'] as String,
-                      roomId: room['id'] as String,
-                      moveInDate: moveInDate!,
-                      message: messageCtrl.text,
-                      seatCount: isSeatRequest ? seatCount : 1,
-                    );
+                        final messenger = ScaffoldMessenger.of(this.context);
+                        final navigator = Navigator.of(dialogContext);
 
-                    if (!mounted) return;
-                    navigator.pop();
+                        try {
+                          await BookingService().createRequest(
+                            hostelId: _hostel['id'] as String,
+                            roomId: room['id'] as String,
+                            moveInDate: moveInDate!,
+                            message: messageCtrl.text,
+                            seatCount: isSeatRequest ? seatCount : 1,
+                          );
 
-                    setState(() {
-                      final key = room['number'] as String;
-                      final add = isSeatRequest ? seatCount : 1;
-                      _requestedRooms[key] =
-                          (_requestedRooms[key] ?? 0) + add;
-                    });
+                          if (!mounted) return;
+                          navigator.pop();
 
-                    _refreshFromBackend();
+                          setState(() {
+                            final key = room['number'] as String;
+                            final add = isSeatRequest ? seatCount : 1;
+                            _requestedRooms[key] =
+                                (_requestedRooms[key] ?? 0) + add;
+                          });
 
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isSeatRequest
-                              ? '${seatCount == 1 ? 'Seat' : '$seatCount seats'} '
-                              'requested for Room ${room['number']}!'
-                              : 'Request sent for Room ${room['number']}! '
-                              'The warden will respond soon.',
-                        ),
-                      ),
-                    );
-                  } catch (e) {
-                    if (!mounted) return;
-                    setDialogState(() {
-                      isSubmitting = false;
-                      errorText =
-                          e.toString().replaceFirst('Exception: ', '');
-                    });
-                  }
-                },
+                          _refreshFromBackend();
+
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isSeatRequest
+                                    ? '${seatCount == 1 ? 'Seat' : '$seatCount seats'} requested for Room ${room['number']}!'
+                                    : 'Request sent for Room ${room['number']}! The warden will respond soon.',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          setDialogState(() {
+                            isSubmitting = false;
+                            errorText = e.toString().replaceFirst(
+                              'Exception: ',
+                              '',
+                            );
+                          });
+                        }
+                      },
                 style: TextButton.styleFrom(foregroundColor: maroon),
                 child: isSubmitting
                     ? const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(maroon),
-                  ),
-                )
-                    : const Text('Send Request',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(maroon),
+                        ),
+                      )
+                    : const Text(
+                        'Send Request',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
               ),
             ],
           );
@@ -549,12 +563,103 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     );
   }
 
-  void _contactAction(String label) {
-    // TODO: wire to url_launcher (tel:/https://wa.me/) once we add it.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label — coming soon')),
-    );
+  // ── Contact Action Methods ─────────────────────────────────────────────
+
+  Future<void> _openPhoneCall(String? number) async {
+    if (number == null || number.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No phone number available.')),
+      );
+      return;
+    }
+
+    final uri = Uri.parse('tel:${number.replaceAll(RegExp(r'\s'), '')}');
+    try {
+      final ok = await launchUrl(uri);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open dialer.')));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open dialer.')));
+    }
   }
+
+  Future<void> _openWhatsApp(String? number, String hostelName) async {
+    if (number == null || number.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No WhatsApp number available.')),
+      );
+      return;
+    }
+
+    // Strip everything except digits — wa.me rejects dashes and spaces.
+    final digits = number.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid WhatsApp number.')));
+      return;
+    }
+
+    // Pakistan numbers are 11 digits starting with 0. WhatsApp wants
+    // the international form without the leading 0: 92XXXXXXXXXX.
+    final intl = digits.startsWith('0') ? '92${digits.substring(1)}' : digits;
+
+    final uri = Uri.parse('https://wa.me/$intl');
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open WhatsApp.')),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open WhatsApp.')));
+    }
+  }
+
+  Future<void> _openLocationOnMap(double? lat, double? lng, String name) async {
+    if (lat == null || lng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This hostel hasn\'t set its location yet.'),
+        ),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
+
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open maps.')));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not open maps: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -567,10 +672,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
     final facilities =
         (hostel['facilities'] as List?)?.cast<String>() ?? const [];
 
-    // No AppBar here on purpose — the photo carousel bleeds to the very
-    // top of the screen (behind the status bar) and carries its own
-    // back / save buttons as an overlay so they stay legible over
-    // whatever photo is showing.
     return Scaffold(
       backgroundColor: bg,
       body: Column(
@@ -583,7 +684,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                   _buildPhotoCarousel(photos),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 20),
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -600,30 +703,32 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                         Text(
                           'Rent and advance shown are per room, or per seat for shared listings.',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: fg.withValues(alpha: 0.5)),
+                            fontSize: 12,
+                            color: fg.withValues(alpha: 0.5),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         if (_rooms.isEmpty)
                           Text(
                             'No rooms listed yet.',
                             style: TextStyle(
-                                fontSize: 12,
-                                color: fg.withValues(alpha: 0.5)),
+                              fontSize: 12,
+                              color: fg.withValues(alpha: 0.5),
+                            ),
                           )
                         else
                           ..._rooms.map(
-                                (room) => Padding(
+                            (room) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                                  child: _DetailRoomCard(
-                                    room: room,
-                                    available: _isRoomAvailable(room),
-                                    pendingSeats:
+                              child: _DetailRoomCard(
+                                room: room,
+                                available: _isRoomAvailable(room),
+                                pendingSeats:
                                     _requestedRooms[room['number']] ?? 0,
-                                    isDark: isDark,
-                                    cardColor: cardColor,
-                                    onRequest: () => _requestBooking(room),
-                                  ),
+                                isDark: isDark,
+                                cardColor: cardColor,
+                                onRequest: () => _requestBooking(room),
+                              ),
                             ),
                           ),
                         const SizedBox(height: 24),
@@ -644,8 +749,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   }
 
   Widget _buildPhotoCarousel(List<String> photos) {
-    // Extra height plus the status-bar inset so the image reaches the
-    // very top edge of the screen instead of stopping below an app bar.
     final topInset = MediaQuery.of(context).padding.top;
     final carouselHeight = 260 + topInset;
 
@@ -657,8 +760,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           if (photos.isEmpty)
             Container(
               color: maroon.withValues(alpha: 0.1),
-              child: Icon(Icons.home_work_outlined,
-                  size: 56, color: maroon.withValues(alpha: 0.35)),
+              child: Icon(
+                Icons.home_work_outlined,
+                size: 56,
+                color: maroon.withValues(alpha: 0.35),
+              ),
             )
           else
             PageView.builder(
@@ -671,8 +777,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stack) => Container(
                   color: maroon.withValues(alpha: 0.1),
-                  child: Icon(Icons.broken_image_outlined,
-                      color: maroon.withValues(alpha: 0.35)),
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: maroon.withValues(alpha: 0.35),
+                  ),
                 ),
               ),
             ),
@@ -691,8 +799,9 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                     width: active ? 18 : 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color:
-                      active ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                      color: active
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   );
@@ -710,9 +819,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                 valueColor: AlwaysStoppedAnimation(maroon),
               ),
             ),
-          // Back / save buttons float on the image itself so they're
-          // reachable regardless of scroll position, with a translucent
-          // dark backdrop that keeps them visible over any photo.
           Positioned(
             top: topInset + 8,
             left: 16,
@@ -762,7 +868,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               child: Text(
                 hostel['name'] as String? ?? '',
                 style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold, color: fg),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: fg,
+                ),
               ),
             ),
             Container(
@@ -774,9 +883,10 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               child: Text(
                 hostel['type'] as String? ?? '',
                 style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: maroon.withValues(alpha: 0.8)),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: maroon.withValues(alpha: 0.8),
+                ),
               ),
             ),
           ],
@@ -784,14 +894,19 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         const SizedBox(height: 6),
         Row(
           children: [
-            Icon(Icons.location_on_outlined,
-                size: 14, color: fg.withValues(alpha: 0.55)),
+            Icon(
+              Icons.location_on_outlined,
+              size: 14,
+              color: fg.withValues(alpha: 0.55),
+            ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
                 hostel['city'] as String? ?? '',
-                style:
-                TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.55)),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: fg.withValues(alpha: 0.55),
+                ),
               ),
             ),
           ],
@@ -824,7 +939,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
               label: 'Starting from',
             ),
           ),
-          Container(width: 1, height: 34, color: maroon.withValues(alpha: 0.15)),
+          Container(
+            width: 1,
+            height: 34,
+            color: maroon.withValues(alpha: 0.15),
+          ),
           Expanded(
             child: _quickStat(
               icon: Icons.event_available_outlined,
@@ -849,14 +968,21 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: maroon)),
-            Text(label,
-                style: TextStyle(
-                    fontSize: 10, color: maroon.withValues(alpha: 0.6))),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: maroon,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: maroon.withValues(alpha: 0.6),
+              ),
+            ),
           ],
         ),
       ],
@@ -884,14 +1010,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_facilityIcons[f] ?? Icons.check_circle_outline,
-                  size: 15, color: maroon),
+              Icon(
+                _facilityIcons[f] ?? Icons.check_circle_outline,
+                size: 15,
+                color: maroon,
+              ),
               const SizedBox(width: 6),
-              Text(f,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: maroon,
-                      fontWeight: FontWeight.w500)),
+              Text(
+                f,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: maroon,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         );
@@ -900,7 +1032,11 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
   }
 
   Widget _buildAddress(
-      Color fg, Map<String, dynamic> hostel, bool isDark, Color cardColor) {
+    Color fg,
+    Map<String, dynamic> hostel,
+    bool isDark,
+    Color cardColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -919,23 +1055,29 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
         children: [
           Text(
             hostel['address'] as String? ?? '',
-            style:
-            TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.75)),
+            style: TextStyle(fontSize: 13, color: fg.withValues(alpha: 0.75)),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _contactAction('Map'),
+              onPressed: () => _openLocationOnMap(
+                (_hostel['latitude'] as num?)?.toDouble(),
+                (_hostel['longitude'] as num?)?.toDouble(),
+                _hostel['name'] as String? ?? '',
+              ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: maroon),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               icon: const Icon(Icons.map_outlined, size: 16, color: maroon),
-              label: const Text('View on Map',
-                  style: TextStyle(color: maroon, fontSize: 13)),
+              label: const Text(
+                'View on Map',
+                style: TextStyle(color: maroon, fontSize: 13),
+              ),
             ),
           ),
         ],
@@ -962,9 +1104,6 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           ),
         ],
       ),
-      // top: false — the bar's own gradient already paints behind the
-      // home indicator; SafeArea here only pushes the buttons up so
-      // they aren't obscured by it.
       child: SafeArea(
         top: false,
         child: Padding(
@@ -972,15 +1111,28 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           child: Row(
             children: [
               _contactIconButton(
-                  Icons.call_outlined, 'Call', () => _contactAction('Call')),
+                Icons.call_outlined,
+                'Call',
+                () => _openPhoneCall(hostel['phone'] as String?),
+              ),
               if (hasWhatsapp) ...[
                 const SizedBox(width: 10),
-                _contactIconButton(Icons.chat_outlined, 'WhatsApp',
-                        () => _contactAction('WhatsApp')),
+                _contactIconButton(
+                  Icons.chat_outlined,
+                  'WhatsApp',
+                  () => _openWhatsApp(
+                    hostel['whatsapp'] as String?,
+                    hostel['name'] as String? ?? '',
+                  ),
+                ),
               ],
               if (hasChat) ...[
                 const SizedBox(width: 10),
-                _contactIconButton(Icons.forum_outlined, 'Chat', _openChatWithWarden),
+                _contactIconButton(
+                  Icons.forum_outlined,
+                  'Chat',
+                  _openChatWithWarden,
+                ),
               ],
             ],
           ),
@@ -997,12 +1149,15 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
           backgroundColor: Colors.white.withValues(alpha: 0.15),
           side: BorderSide(color: Colors.white.withValues(alpha: 0.6)),
           padding: const EdgeInsets.symmetric(vertical: 12),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         icon: Icon(icon, size: 16, color: Colors.white),
-        label:
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
       ),
     );
   }
@@ -1013,8 +1168,6 @@ Widget _sectionTitle(String title, Color fg) => Text(
   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: fg),
 );
 
-// ── Room Card (seeker-facing, read-only + request action) ──────────────
-// ── Room Card (seeker-facing, read-only + request action) ──────────────
 class _DetailRoomCard extends StatelessWidget {
   final Map<String, dynamic> room;
   final bool available;
@@ -1043,15 +1196,16 @@ class _DetailRoomCard extends StatelessWidget {
     final type = (room['roomType'] as int?) ?? 0;
 
     final totalSeats = seats;
-    final isLocked = !available ||
+    final isLocked =
+        !available ||
         (!isSeatRoom && pendingSeats > 0) ||
         (isSeatRoom && pendingSeats >= totalSeats);
 
     final label = isLocked
         ? (pendingSeats > 0 ? 'Requested' : 'Unavailable')
         : (pendingSeats > 0
-        ? 'Request Again'
-        : (isSeatRoom ? 'Request a Seat' : 'Request to Book'));
+              ? 'Request Again'
+              : (isSeatRoom ? 'Request a Seat' : 'Request to Book'));
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1071,18 +1225,23 @@ class _DetailRoomCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.door_front_door_outlined,
-                  color: maroon, size: 18),
+              const Icon(
+                Icons.door_front_door_outlined,
+                color: maroon,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Room ${room['number']}',
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.bold, color: maroon),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: maroon,
+                ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: available
                       ? Colors.green.withValues(alpha: 0.15)
@@ -1104,7 +1263,9 @@ class _DetailRoomCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 2),
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.purple.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
@@ -1124,10 +1285,12 @@ class _DetailRoomCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '$type Seater • '
-                '${isSeatRoom ? 'Per Seat' : 'Complete Room'} • '
-                '${room['attachedWashroom'] == true ? 'Attached WR' : 'Shared WR'}',
+            '${isSeatRoom ? 'Per Seat' : 'Complete Room'} • '
+            '${room['attachedWashroom'] == true ? 'Attached WR' : 'Shared WR'}',
             style: TextStyle(
-                fontSize: 12, color: maroon.withValues(alpha: 0.6)),
+              fontSize: 12,
+              color: maroon.withValues(alpha: 0.6),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -1139,14 +1302,17 @@ class _DetailRoomCard extends StatelessWidget {
                     Text(
                       'Rs. $price/mo',
                       style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: maroon),
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: maroon,
+                      ),
                     ),
                     Text(
                       'Advance: Rs. $advance',
                       style: TextStyle(
-                          fontSize: 11, color: maroon.withValues(alpha: 0.6)),
+                        fontSize: 11,
+                        color: maroon.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),
@@ -1154,29 +1320,37 @@ class _DetailRoomCard extends StatelessWidget {
               ElevatedButton(
                 onPressed: isLocked ? null : onRequest,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  pendingSeats > 0 ? Colors.green.withValues(alpha: 0.15) : maroon,
+                  backgroundColor: pendingSeats > 0
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : maroon,
                   disabledBackgroundColor: pendingSeats > 0
                       ? Colors.green.withValues(alpha: 0.15)
                       : maroon.withValues(alpha: 0.25),
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (pendingSeats > 0) ...[
-                      Icon(Icons.check_circle,
-                          size: 14, color: Colors.green[800]),
+                      Icon(
+                        Icons.check_circle,
+                        size: 14,
+                        color: Colors.green[800],
+                      ),
                       const SizedBox(width: 4),
                     ],
                     Text(
                       label,
                       style: TextStyle(
-                        color:
-                        pendingSeats > 0 ? Colors.green[800] : Colors.white,
+                        color: pendingSeats > 0
+                            ? Colors.green[800]
+                            : Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
